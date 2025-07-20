@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ISBN Finder</title>
+</head>
+<body>
+  <h2>Find ISBN by Book Title</h2>
+  <input type="text" id="bookTitle" placeholder="Enter book title" />
+  <button onclick="searchISBN()">Search</button>
+  <div id="result"></div>
+
+  <script>
+    function searchISBN() {
+      const title = document.getElementById('bookTitle').value;
+      const searchUrl = `https://isbnsearch.org/search?s=${encodeURIComponent(title)}`;
+      window.open(searchUrl, '_blank');
+    }
+  </script>
+</body>
+</html>
