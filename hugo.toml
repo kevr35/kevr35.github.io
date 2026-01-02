@@ -3,6 +3,7 @@ languageCode = 'en-us'
 title = 'Kevin Alan Reiss'
 theme = 'PaperMod'
 enableGitInfo = true # allow for accessing Git's last modified time
+enableRobotsTXT = true #google scholar crawlers will be directed
 
 [params]
   math = true  # This makes .Site.Params.math true for EVERY page
