@@ -2,6 +2,7 @@ baseURL = "https://kevin-reiss.com/"
 languageCode = 'en-us'
 title = 'Kevin Alan Reiss'
 theme = 'PaperMod'
+enableGitInfo = true # allow for accessing Git's last modified time
 
 [params]
   math = true  # This makes .Site.Params.math true for EVERY page
