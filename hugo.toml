@@ -59,6 +59,4 @@ enableRobotsTXT = true #google scholar crawlers will be directed
 
 [params.assets]#Icon for site
     favicon = "/favicon/favicon.ico"
-    favicon16x16 = "/favicon/favicon-96x96.png"
-    favicon32x32 = "/favicon/favicon-396x96.png"
     apple_touch_icon = "/favicon/apple-touch-icon.png"
