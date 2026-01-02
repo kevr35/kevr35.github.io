@@ -39,7 +39,7 @@ enableRobotsTXT = true #google scholar crawlers will be directed
 
 [params.homeInfoParams]#Biography
     Title = "Kevin Alan Reiss"
-    Content = "I'm a Ph.D. student in physics at Dartmouth College. My background is in nonlinear dynamical systems and computational physics from my undergraduate studies at Boston University. My current interests lie at the intersection of quantum information, computation, and complexity theories."
+    Content = "I'm a Ph.D. student in physics at Dartmouth College. My background is in nonlinear dynamical systems and computational physics from my undergraduate studies at Boston University. My current interests lie at the intersection of quantum information, computation, and complexity theories. Currently, I enjoy bouldering at Pawtuckaway, sport climbing at Rumney, and training in the gym, plus playing tuba occasionally with the Dartmouth College Marching Band. Hopefully I can learn how to snowboard some time soon."
 
 [[params.socialIcons]]
     name = "github"
