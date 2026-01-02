@@ -1,3 +1,5 @@
+<link rel="canonical" href="{{ .Permalink }}"> <!--Make the main link the only one for search engines -->
+
 {{ if or .Params.math .Site.Params.math }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 
@@ -14,7 +16,7 @@
     });"></script>
 
 <script>
-    // Physics PhD Special: Ensure Math renders when expanding abstracts
+    // Ensure Math renders when expanding abstracts
     document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll("details").forEach((el) => {
             el.addEventListener("toggle", () => {
