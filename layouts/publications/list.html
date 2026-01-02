@@ -1,0 +1,99 @@
+{{ define "main" }}
+<header class="page-header">
+  <h1>{{ .Title }}</h1>
+</header>
+
+<ul class="publication-list" style="list-style: none; padding: 0;">
+  {{ range .Pages.ByDate.Reverse }}
+  
+  {{ $primaryLink := .Params.doi | printf "https://doi.org/%s" }}
+  {{ if not .Params.doi }}{{ $primaryLink = .Params.arxiv | printf "https://arxiv.org/abs/%s" }}{{ end }}
+  {{ if and (not .Params.doi) (not .Params.arxiv) }}{{ $primaryLink = .Params.external_url }}{{ end }}
+  {{ if not $primaryLink }}{{ $primaryLink = .Params.pdf | relURL }}{{ end }}
+
+  <li style="display: flex; gap: 25px; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem;">
+    
+    <div style="flex-shrink: 0;">
+        <a href="{{ $primaryLink }}" target="_blank">
+            {{ if .Params.image }}
+                <img src="{{ .Params.image | relURL }}" alt="Source Link" style="width: 160px; height: 160px; object-fit: contain; border: 1px solid var(--border); padding: 5px; background: #fff; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            {{ else }}
+                <div style="width: 160px; height: 160px; background: var(--tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 0.8em;">No Logo</div>
+            {{ end }}
+        </a>
+    </div>
+
+    <div style="flex-grow: 1;">
+        <a href="{{ $primaryLink }}" target="_blank" style="text-decoration: none; color: inherit;">
+            <strong style="font-size: 1.25em; color: var(--primary); border-bottom: 1px solid transparent; transition: border 0.2s;" onmouseover="this.style.borderBottom='1px solid var(--primary)'" onmouseout="this.style.borderBottom='1px solid transparent'">
+                {{ .Title | markdownify }}
+            </strong>
+        </a><br>
+        
+        <span style="font-size: 0.95em; color: var(--secondary);">{{ (delimit .Params.author ", ") | markdownify }}</span><br>
+        <em style="font-size: 0.95em; color: var(--secondary);">{{ .Params.publication | markdownify }} ({{ .Date.Format "2006" }})</em>
+        
+        {{ if .Params.abstract }}
+          <details style="margin-top: 12px; font-size: 0.9em; color: var(--primary);">
+              <summary style="cursor: pointer; color: var(--secondary); font-weight: 600;">Abstract</summary>
+              <div style="margin-top: 8px; padding: 15px; background: var(--code-bg); border-left: 4px solid var(--secondary); line-height: 1.6; border-radius: 0 4px 4px 0;">
+                  {{ .Params.abstract | markdownify }}
+              </div>
+                <style>
+                /* Prevent KaTeX elements from breaking across lines */
+                .katex {
+                    white-space: nowrap;
+                }
+                /* Allow the display math (blocks) to still function normally */
+                .katex-display {
+                    white-space: normal;
+                }
+            </style>
+          </details>
+        {{ end }}
+
+        <div style="margin: 8px 0;">
+            {{ range .Params.tags }}
+                <span style="display: inline-block; background: var(--code-bg); border: 1px solid var(--border); border-radius: 12px; padding: 2px 10px; font-size: 0.75em; color: var(--primary); margin-right: 5px;">{{ . }}</span>
+            {{ end }}
+        </div>
+
+        <div style="margin-top: 12px; font-size: 0.85em; display: flex; gap: 15px; align-items: center;">
+            {{ if .Params.doi }}<a href="https://doi.org/{{ .Params.doi }}" target="_blank" style="text-decoration: none; color: #007acc;">[DOI]</a>{{ end }}
+            {{ if .Params.arxiv }}<a href="https://arxiv.org/abs/{{ .Params.arxiv }}" target="_blank" style="text-decoration: none; color: #007acc;">[arXiv]</a>{{ end }}
+            {{ if .Params.external_url }}<a href="{{ .Params.external_url }}" target="_blank" style="text-decoration: none; color: #007acc;">[{{ .Params.url_label | default "Link" }}]</a>{{ end }}
+            {{ if .Params.pdf }}<a href="{{ .Params.pdf | relURL }}" target="_blank" style="text-decoration: none; color: #007acc;">[PDF]</a>{{ end }}
+            
+            {{ if .Params.bibtex }}
+            <button onclick="copyBibtex(this, `{{ .Params.bibtex }}`)" style="background: var(--tertiary); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.9em; color: var(--primary);">
+                Copy BibTeX
+            </button>
+            {{ end }}
+        </div>
+
+
+    </div>
+</li>
+  {{ end }}
+</ul>
+
+<script>
+function copyBibtex(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        btn.style.background = "#28a745";
+        btn.style.color = "#fff";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "var(--tertiary)";
+            btn.style.color = "var(--primary)";
+        }, 2000);
+    });
+}
+</script>
+
+<footer style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border); text-align: center; color: var(--secondary); font-size: 0.85em;">
+    Updated on {{ now.Format "January 2, 2006" }}
+</footer>
+{{ end }}

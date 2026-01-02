@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Publications on Kevin Alan Reiss</title>
+    <link>http://localhost:1313/publications/</link>
+    <description>Recent content in Publications on Kevin Alan Reiss</description>
+    <generator>Hugo -- 0.153.2</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Feb 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/publications/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The Metastable State of Fermi-Pasta-Ulam-Tsingou Models</title>
+      <link></link>
+      <pubDate>Mon, 06 Feb 2023 00:00:00 +0000</pubDate>
+      <guid></guid>
+      <description></description>
+    </item>
+    <item>
+      <title>The Metastable State of Fermi-Pasta-Ulam-Tsingou Models</title>
+      <link></link>
+      <pubDate>Wed, 04 May 2022 00:00:00 +0000</pubDate>
+      <guid></guid>
+      <description></description>
+    </item>
+    <item>
+      <title>ElectroDynamics: A Novel Computational Approach</title>
+      <link></link>
+      <pubDate>Fri, 01 Jan 2021 00:00:00 +0000</pubDate>
+      <guid></guid>
+      <description></description>
+    </item>
+    <item>
+      <title>The 𝛽 Fermi‑Pasta‑Ulam‑Tsingou Recurrence Problem</title>
+      <link></link>
+      <pubDate>Wed, 06 Nov 2019 00:00:00 +0000</pubDate>
+      <guid></guid>
+      <description></description>
+    </item>
+  </channel>
+</rss>

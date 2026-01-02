@@ -1,0 +1,56 @@
+baseURL = "https://kevr35.github.io/"
+languageCode = 'en-us'
+title = 'Kevin Alan Reiss'
+theme = 'PaperMod'
+
+[params]
+  math = true  # This makes .Site.Params.math true for EVERY page
+
+[markup]#add support for maths
+  [markup.goldmark]
+    [markup.goldmark.extensions.passthrough]
+      enable = true
+      [markup.goldmark.extensions.passthrough.delimiters]
+        block = [['$$', '$$'], ['\\[', '\\]']]
+        inline = [['$', '$'], ['\\(', '\\)']]
+
+[[menu.main]]#Put Blog posts first 
+    name = "Writings"
+    url = "posts/"
+    weight = 10
+
+[[menu.main]]#Put publications second
+    name = "Publications"
+    url = "publications/"
+    weight = 20
+
+[build]
+  [[build.publishResources]]
+    src = "publications/**"
+    # This prevents Hugo from actually creating the individual paper.html files
+    # while still letting them appear in the list!
+
+[[menu.main]]#Put CV third, direct it to my static PDF
+    name = "CV"
+    url = "Kevin Reiss Resume.pdf" # Points to static/url.pdf
+    weight = 30
+
+[params.homeInfoParams]#Biography
+    Title = "Kevin Alan Reiss"
+    Content = "I'm a Ph.D. student in physics at Dartmouth College. My background is in nonlinear dynamical systems and computational physics from my undergraduate studies at Boston University. My current interests lie at the intersection of quantum information, computation, and complexity theories."
+
+[[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/kevr35"
+
+[[params.socialIcons]]
+    name = "orcid"
+    url = "https://orcid.org/0000-0002-8698-253X"
+
+[[params.socialIcons]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/in/Kevin-Reiss"
+
+[[params.socialIcons]]
+    name = "googlescholar"
+    url = "https://scholar.google.com/citations?user=UNax7A4AAAAJ&hl=en"
