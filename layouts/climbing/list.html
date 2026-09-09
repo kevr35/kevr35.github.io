@@ -1,0 +1,123 @@
+{{- define "main" -}}
+{{- $pages := where .RegularPages "Params.hidden" "ne" true -}}
+{{- $locations := slice -}}
+{{- $grades := slice -}}
+{{- $disciplines := slice -}}
+{{- range $pages -}}
+  {{- with .Params.location -}}
+    {{- if not (in $locations .) -}}{{- $locations = $locations | append . -}}{{- end -}}
+  {{- end -}}
+  {{- with .Params.grade -}}
+    {{- if not (in $grades .) -}}{{- $grades = $grades | append . -}}{{- end -}}
+  {{- end -}}
+  {{- with .Params.discipline -}}
+    {{- if not (in $disciplines .) -}}{{- $disciplines = $disciplines | append . -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+
+<header class="page-header climbing-header">
+  {{ partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{ with .Description }}<div class="post-description">{{ . | markdownify }}</div>{{ end }}
+</header>
+
+{{ with .Content }}
+<div class="post-content climbing-intro">{{ . }}</div>
+{{ end }}
+
+{{- $mapPoints := slice -}}
+{{- range $pages -}}
+  {{- if and .Params.area_latitude .Params.area_longitude -}}
+    {{- $mapPoints = $mapPoints | append (dict "location" .Params.location "latitude" .Params.area_latitude "longitude" .Params.area_longitude "title" .Title "url" .RelPermalink "grade" .Params.grade) -}}
+  {{- end -}}
+{{- end -}}
+
+{{ if $mapPoints }}
+<section class="climbing-map-section" aria-labelledby="climbing-map-title">
+  <div class="climbing-map-heading">
+    <div>
+      <p class="climbing-map-kicker">Where I've climbed</p>
+      <h2 id="climbing-map-title">Climbing areas</h2>
+    </div>
+    <p>Each pin represents an area, not an individual route.</p>
+  </div>
+  <div id="climbing-map" class="climbing-map" data-map-points="{{ $mapPoints | jsonify }}"></div>
+</section>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{{ end }}
+
+<section class="climbing-browser" data-climbing-browser>
+  <div class="climbing-controls" aria-label="Filter climbing entries">
+    <label>
+      <span>Location</span>
+      <select data-filter="location">
+        <option value="">All locations</option>
+        {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <div class="climbing-grade-ranges" data-grade-ranges>
+      <div class="climbing-grade-range" data-grade-range="bouldering">
+        <span>V-scale range</span>
+        <div class="climbing-range-values"><output data-grade-output="bouldering-min"></output><span>to</span><output data-grade-output="bouldering-max"></output></div>
+        <input type="range" data-grade-input="bouldering-min" aria-label="Minimum bouldering grade">
+        <input type="range" data-grade-input="bouldering-max" aria-label="Maximum bouldering grade">
+      </div>
+      <div class="climbing-grade-range" data-grade-range="sport">
+        <span>YDS range</span>
+        <div class="climbing-range-values"><output data-grade-output="sport-min"></output><span>to</span><output data-grade-output="sport-max"></output></div>
+        <input type="range" data-grade-input="sport-min" aria-label="Minimum sport climbing grade">
+        <input type="range" data-grade-input="sport-max" aria-label="Maximum sport climbing grade">
+      </div>
+    </div>
+    <label>
+      <span>Type</span>
+      <select data-filter="discipline">
+        <option value="">All types</option>
+        {{ range sort $disciplines }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <label>
+      <span>Sort</span>
+      <select data-sort>
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="grade">Grade</option>
+        <option value="title">Name</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="climbing-results" data-results aria-live="polite"></p>
+
+  <div class="climbing-grid" data-route-grid>
+    {{ range $pages.ByDate.Reverse }}
+    <article class="climbing-card" data-route-card data-location="{{ .Params.location | lower | htmlEscape }}" data-grade="{{ .Params.grade | lower | htmlEscape }}" data-discipline="{{ .Params.discipline | lower | htmlEscape }}" data-date="{{ .Params.climb_date }}" data-title="{{ .Title | lower | htmlEscape }}">
+      {{ $route := . }}
+      {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
+      {{ with $youtube }}
+      {{ $youtubeID := . }}
+      {{ if strings.Contains . "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" . }}{{ else if strings.Contains . "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" . }}{{ end }}
+      <a class="climbing-card__media" href="{{ $route.RelPermalink }}" aria-label="View {{ $route.Title }}">
+        <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video thumbnail for {{ $route.Title }}" loading="lazy">
+        <span class="climbing-card__play" aria-hidden="true">Play</span>
+      </a>
+      {{ end }}
+      <div class="climbing-card__body">
+        <p class="climbing-card__eyebrow">{{ .Params.location }}{{ with .Params.area }} / {{ . }}{{ end }}</p>
+        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        <p class="climbing-card__meta">{{ .Params.grade }}{{ with .Params.grade_system }} {{ . }}{{ end }}{{ with .Params.discipline }} · {{ . }}{{ end }}{{ with .Params.climb_date }} · {{ time.Format "Jan 2, 2006" . }}{{ end }}</p>
+        {{ with .Params.personal_note }}<p>{{ . }}</p>{{ end }}
+        {{ with .Params.mountain_project_url }}<a class="mountain-project-link" href="{{ . }}" target="_blank" rel="noopener"><img src="{{ "favicon/mountain-project.png" | relURL }}" alt="" width="20" height="20"><span>Mountain Project</span><span aria-hidden="true">&#8599;</span></a>{{ end }}
+      </div>
+    </article>
+    {{ end }}
+  </div>
+  <p class="climbing-empty" data-empty hidden>No entries match those filters.</p>
+</section>
+
+{{- with resources.Get "js/climbing.js" -}}
+  {{- $script := . | minify | fingerprint -}}
+  <script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,72 @@
+{{- define "main" -}}
+{{ partial "home_info.html" . }}
+
+<section class="home-feature home-publications" aria-labelledby="home-publications-title">
+  <div class="home-feature__heading">
+    <a class="home-feature__title" href="{{ "publications/" | relLangURL }}">
+      <p class="home-feature__kicker">Selected work</p>
+      <h2 id="home-publications-title">Publications</h2>
+    </a>
+    <a class="home-feature__link" href="{{ "publications/" | relLangURL }}">Browse publications <span aria-hidden="true">&#8594;</span></a>
+  </div>
+  <div class="home-publication-grid">
+    {{ $publications := site.GetPage "section" "publications" }}
+    {{ range first 3 $publications.Pages.ByDate.Reverse }}
+    {{ $primaryLink := "" }}
+    {{ with .Params.doi }}{{ $primaryLink = printf "https://doi.org/%s" . }}{{ end }}
+    {{ if and (not $primaryLink) .Params.arxiv }}{{ $primaryLink = printf "https://arxiv.org/abs/%s" .Params.arxiv }}{{ end }}
+    {{ if and (not $primaryLink) .Params.external_url }}{{ $primaryLink = .Params.external_url }}{{ end }}
+    {{ if and (not $primaryLink) .Params.pdf }}{{ $primaryLink = .Params.pdf | relURL }}{{ end }}
+    <a class="home-publication-card" href="{{ $primaryLink }}" target="_blank" rel="noopener">
+      {{ with .Params.image }}<img src="{{ . | relURL }}" alt="" loading="lazy">{{ end }}
+      <span>
+        <strong>{{ .Title | markdownify }}</strong>
+        <small>{{ .Params.publication | markdownify }} · {{ .Date.Format "2006" }}</small>
+      </span>
+    </a>
+    {{ end }}
+  </div>
+</section>
+
+<section class="home-feature home-writings" aria-labelledby="home-writings-title">
+  <div class="home-feature__heading">
+    <a class="home-feature__title" href="{{ "posts/" | relLangURL }}">
+      <p class="home-feature__kicker">Notes and ideas</p>
+      <h2 id="home-writings-title">Writings</h2>
+    </a>
+    <a class="home-feature__link" href="{{ "posts/" | relLangURL }}">Read the writings <span aria-hidden="true">&#8594;</span></a>
+  </div>
+  <div class="home-writing-grid">
+    {{ range first 3 (where site.RegularPages "Section" "posts").ByDate.Reverse }}
+    <a class="home-writing-card" href="{{ .RelPermalink }}">
+      <strong>{{ .Title }}</strong>
+      <small>{{ .Date.Format "Jan 2, 2006" }}</small>
+      <span>{{ .Summary | plainify | htmlUnescape | truncate 150 }}</span>
+    </a>
+    {{ end }}
+  </div>
+</section>
+
+<section class="home-feature home-climbing" aria-labelledby="home-climbing-title">
+  <div class="home-feature__heading">
+    <a class="home-feature__title" href="{{ "climbing/" | relLangURL }}">
+      <p class="home-feature__kicker">Outside the office</p>
+      <h2 id="home-climbing-title">Climbing</h2>
+    </a>
+    <a class="home-feature__link" href="{{ "climbing/" | relLangURL }}">Visit the climbing log <span aria-hidden="true">&#8594;</span></a>
+  </div>
+  <div class="home-climbing-grid">
+    {{ range first 3 (where site.RegularPages "Section" "climbing").ByDate.Reverse }}
+    {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
+    {{ if $youtube }}
+      {{ $youtubeID := $youtube }}
+      {{ if strings.Contains $youtube "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ else if strings.Contains $youtube "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ end }}
+      <a class="home-climbing-card" href="{{ .RelPermalink }}">
+        <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video preview for {{ .Title }}" loading="lazy">
+        <span><strong>{{ .Title }}</strong><small>{{ .Params.location }} · {{ .Params.grade }}</small></span>
+      </a>
+    {{ end }}
+    {{ end }}
+  </div>
+</section>
+{{- end -}}

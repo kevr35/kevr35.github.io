@@ -26,6 +26,11 @@ enableRobotsTXT = true #google scholar crawlers will be directed
     url = "publications/"
     weight = 20
 
+[[menu.main]]#Put climbing third
+    name = "Climbing"
+    url = "climbing/"
+    weight = 25
+
 [build]
   [[build.publishResources]]
     src = "publications/**"

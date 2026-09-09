@@ -1,0 +1,371 @@
+.climbing-header {
+  margin-bottom: 1rem;
+}
+
+.climbing-intro {
+  max-width: 48rem;
+}
+
+.climbing-browser {
+  margin-top: 2rem;
+}
+
+.climbing-map-section {
+  margin: 2rem 0;
+}
+
+.climbing-map-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.climbing-map-heading h2,
+.climbing-map-heading p {
+  margin: 0;
+}
+
+.climbing-map-heading p:last-child {
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.climbing-map-kicker {
+  margin-bottom: 0.25rem !important;
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.climbing-map {
+  z-index: 0;
+  height: 25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.climbing-map .leaflet-popup-content ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.climbing-map .leaflet-popup-content li + li {
+  margin-top: 0.3rem;
+}
+
+.climbing-map .leaflet-popup-content li span {
+  color: var(--secondary);
+  font-size: 0.85em;
+}
+
+.climbing-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 1rem 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--entry);
+}
+
+.climbing-controls > label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.climbing-controls > label:nth-of-type(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.climbing-controls > label:nth-of-type(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.climbing-controls > label:nth-of-type(3) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.climbing-controls select {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.65rem;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+.climbing-grade-ranges {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.climbing-grade-range {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.climbing-grade-range[hidden] {
+  display: none;
+}
+
+.climbing-range-values {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.climbing-grade-range input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.climbing-results {
+  margin: 1rem 0;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.climbing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.climbing-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--entry);
+}
+
+.climbing-card[hidden] {
+  display: none;
+}
+
+.climbing-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--code-bg);
+}
+
+.climbing-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.climbing-card__play {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.3rem 0.55rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.climbing-card__body {
+  padding: 1rem;
+}
+
+.climbing-card__eyebrow,
+.climbing-card__meta {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.climbing-card h2 {
+  margin: 0.35rem 0;
+  font-size: 1.2rem;
+}
+
+.climbing-card h2 a {
+  color: var(--primary);
+}
+
+.climbing-card__body > p:last-child {
+  margin-bottom: 0;
+}
+
+.mountain-project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mountain-project-link:hover {
+  border-color: var(--primary);
+}
+
+.mountain-project-link__mark {
+  display: inline-grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  color: #fff;
+  background: #1f6f8b;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  letter-spacing: 0;
+}
+
+.mountain-project-link--large {
+  margin: 1.5rem 0;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.climbing-empty {
+  padding: 2rem 0;
+  color: var(--secondary);
+}
+
+.climbing-route__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.climbing-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  color: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--entry);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.climbing-back-link:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.climbing-back-link span {
+  color: var(--primary);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.climbing-route__facts span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.climbing-route__facts b {
+  color: var(--primary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.climbing-video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 2rem 0;
+  overflow: hidden;
+  background: var(--code-bg);
+}
+
+.climbing-video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.climbing-note {
+  margin: 2rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--primary);
+  background: var(--code-bg);
+}
+
+.climbing-note h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.climbing-note p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .climbing-map-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .climbing-map {
+    height: 20rem;
+  }
+
+  .climbing-back-link {
+    margin-bottom: 0.75rem;
+  }
+
+  .climbing-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .climbing-controls > label:nth-of-type(1),
+  .climbing-controls > label:nth-of-type(2),
+  .climbing-controls > label:nth-of-type(3) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .climbing-grade-ranges {
+    grid-template-columns: 1fr;
+    grid-row: auto;
+  }
+}
+
+.mountain-project-link img {
+  display: block;
+  flex: 0 0 auto;
+}
