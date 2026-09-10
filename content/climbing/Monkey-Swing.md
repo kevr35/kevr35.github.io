@@ -1,11 +1,10 @@
 ---
 title: "Monkey Swing"
+region: "Northeast Ohio"
 date: 2026-09-09T14:08:57-04:00
 climb_date: "2023-11-04"
 location: "Chippewa Creek"
 area: "Downstream"
-area_latitude: 41.32087
-area_longitude: -81.61892
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V5"

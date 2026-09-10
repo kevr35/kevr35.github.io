@@ -1,10 +1,9 @@
 ---
 title: "Inches and Fractions"
+region: "Central Ohio"
 date: 2026-09-09T14:59:22-04:00
 climb_date: "2024-04-20"
 location: "Brady's Bluff"
-area_latitude: 40.01041
-area_longitude: -81.97361
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V8"
