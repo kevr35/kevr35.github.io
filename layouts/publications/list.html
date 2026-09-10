@@ -16,7 +16,12 @@
     <div style="flex-shrink: 0;">
         <a href="{{ $primaryLink }}" target="_blank">
             {{ if .Params.image }}
-                <img src="{{ .Params.image | relURL }}" alt="Source Link" style="width: 160px; height: 160px; object-fit: contain; border: 1px solid var(--border); padding: 5px; background: #fff; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                {{ $image := .Params.image }}
+                {{ if hasPrefix $image "http" }}
+                <img src="{{ $image }}" alt="Publisher icon for {{ .Title }}" style="width: 160px; height: 160px; object-fit: contain; border: 1px solid var(--border); padding: 5px; background: #fff; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                {{ else }}
+                <img src="{{ $image | relURL }}" alt="Preview image for {{ .Title }}" style="width: 160px; height: 160px; object-fit: contain; border: 1px solid var(--border); padding: 5px; background: #fff; border-radius: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                {{ end }}
             {{ else }}
                 <div style="width: 160px; height: 160px; background: var(--tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 0.8em;">No Logo</div>
             {{ end }}

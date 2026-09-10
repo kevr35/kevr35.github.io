@@ -1,0 +1,89 @@
+{{- define "main" -}}
+<div class="publication-editor" data-publication-editor>
+  <header class="publication-editor__header">
+    <p class="publication-editor__eyebrow">Moderator tool</p>
+    <h1>{{ .Title }}</h1>
+    <p>Choose <strong>one</strong> input method below: enter a DOI or paper URL, <strong>or</strong> paste BibTeX or load a `.bib` file. Review the imported fields, then download a Hugo publication file. Nothing is uploaded or published by this page.</p>
+  </header>
+
+  <section class="publication-editor__panel publication-editor__lookup">
+    <h2>Option A: DOI or paper URL</h2>
+    <label for="publication-source">Enter a DOI or paper URL <small>Crossref is used for DOIs; publisher pages are attempted when their CORS policy allows it.</small></label>
+    <input id="publication-source" type="url" data-publication-source placeholder="10.1234/example or https://publisher.example/paper">
+    <div class="publication-editor__actions">
+      <button type="button" class="publication-editor__button" data-fetch-source>Fetch publication data</button>
+    </div>
+    <p class="publication-editor__status" data-fetch-status role="status"></p>
+  </section>
+
+  <section class="publication-editor__panel publication-editor__import">
+    <div class="publication-editor__section-heading">
+      <h2>Option B: BibTeX</h2>
+      <label class="publication-editor__file-button publication-editor__file-button--primary">
+        Load a .bib file
+        <input type="file" accept=".bib,text/plain" data-bib-file>
+      </label>
+    </div>
+    <label for="bibtex-input">Paste BibTeX or load a `.bib` file</label>
+    <textarea id="bibtex-input" data-bibtex-input rows="12" placeholder="@article{key,&#10;  title = {Your paper},&#10;  author = {Doe, Jane and Smith, John},&#10;  year = {2026},&#10;  journal = {Journal Name},&#10;  doi = {10.xxxx/example}&#10;}"></textarea>
+    <div class="publication-editor__actions">
+      <button type="button" class="publication-editor__button publication-editor__button--primary" data-parse>Parse BibTeX</button>
+    </div>
+    <p class="publication-editor__status" data-status role="status"></p>
+  </section>
+
+  <section class="publication-editor__panel" data-entry-picker hidden>
+    <label for="entry-select">Entry</label>
+    <select id="entry-select" data-entry-select></select>
+  </section>
+
+  <form class="publication-editor__form" data-publication-form hidden>
+    <div class="publication-editor__panel">
+      <div class="publication-editor__form-grid">
+        <label>Title<input name="title" required></label>
+        <label>Publication / venue<input name="publication"></label>
+        <label>Authors <small>Separate authors with semicolons</small><input name="author"></label>
+        <label>Publication date <small>YYYY-MM-DD or YYYY</small><input name="date"></label>
+        <label>DOI<input name="doi" placeholder="10.1234/example"></label>
+        <label>arXiv ID<input name="arxiv" placeholder="2401.12345"></label>
+        <label>PDF path <small>Relative to static/</small><input name="pdf" placeholder="papers/example.pdf"></label>
+        <label>External URL<input name="external_url" type="url"></label>
+        <label>URL label<input name="url_label" placeholder="Paper"></label>
+        <label>Tags <small>Separate tags with commas</small><input name="tags"></label>
+      </div>
+      <label>Abstract<textarea name="abstract" rows="8"></textarea></label>
+      <label>Filename <small>Without `.md`; spaces become hyphens</small><input name="filename" required></label>
+      <label class="publication-editor__checkbox"><input name="include_image" type="checkbox" data-include-image checked> Include a publication image</label>
+      <div class="publication-editor__image-options" data-image-options hidden>
+        <label>Image source
+          <select name="image_mode" data-image-mode>
+            <option value="local" selected>Local preview image</option>
+            <option value="favicon">Publisher favicon from the external URL</option>
+          </select>
+        </label>
+        <label>Image path or URL <small>Use `previews/name.png` for a file in static/previews/</small><input name="image" placeholder="previews/example.png"></label>
+        <p class="publication-editor__image-help" data-image-help></p>
+      </div>
+      <label class="publication-editor__checkbox"><input name="draft" type="checkbox"> Keep as draft</label>
+      <section class="publication-editor__next-steps">
+        <h2>Next steps</h2>
+        <ol>
+          <li>Review the fields above, choose the image option, and set <strong>Keep as draft</strong> if you are not ready to publish.</li>
+          <li>Click <strong>Download Hugo Markdown</strong>.</li>
+          <li>Put the downloaded <code>.md</code> file in <code>content/publications/</code>.</li>
+          <li>If you chose a local image, put that image in <code>static/previews/</code> using the path in the <code>image</code> field. Favicon mode does not require an image file.</li>
+          <li>Run <code>hugo --minify</code>, review the result, then commit and push the Markdown file and any local image.</li>
+        </ol>
+      </section>
+      <div class="publication-editor__actions">
+        <button type="submit" class="publication-editor__button publication-editor__button--primary">Download Hugo Markdown</button>
+        <button type="button" class="publication-editor__button" data-copy>Copy Markdown</button>
+      </div>
+      <p class="publication-editor__status" data-export-status role="status"></p>
+    </div>
+    <label class="publication-editor__preview-label">Generated Markdown<textarea data-markdown-preview rows="18" readonly></textarea></label>
+  </form>
+</div>
+{{- $script := resources.Get "js/publication-editor.js" | minify | fingerprint -}}
+<script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
