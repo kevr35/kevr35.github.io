@@ -1,0 +1,160 @@
+.climbing-editor {
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+.climbing-editor__header {
+  margin-bottom: 2rem;
+}
+
+.climbing-editor__eyebrow {
+  margin-bottom: 0.35rem;
+  color: var(--secondary);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.climbing-editor__panel,
+.climbing-editor__next-steps {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--entry);
+}
+
+.climbing-editor__lookup {
+  border-color: var(--primary);
+}
+
+.climbing-editor h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.climbing-editor label,
+.climbing-editor__preview-label {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.climbing-editor small {
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.climbing-editor input:not([type="checkbox"]),
+.climbing-editor select,
+.climbing-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+}
+
+.climbing-editor textarea {
+  resize: vertical;
+}
+
+.climbing-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+}
+
+.climbing-editor__actions,
+.climbing-editor__search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.climbing-editor__search-controls input {
+  flex: 1 1 18rem;
+}
+
+.climbing-editor__button {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.7rem 1rem;
+  color: var(--primary);
+  background: var(--tertiary);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.climbing-editor__button--primary {
+  color: var(--theme);
+  background: var(--primary);
+}
+
+.climbing-editor__status {
+  min-height: 1.4em;
+  color: var(--secondary);
+}
+
+.climbing-editor__checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.climbing-editor__location-prompt {
+  padding: 0.75rem;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  background: var(--code-bg);
+}
+
+.climbing-editor__next-steps {
+  border-left: 4px solid var(--primary);
+  background: var(--code-bg);
+}
+
+.climbing-editor__next-steps ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.climbing-editor__next-steps li + li {
+  margin-top: 0.5rem;
+}
+
+.climbing-editor__preview-label textarea {
+  font-family: monospace;
+}
+
+@media (max-width: 640px) {
+  .climbing-editor__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.climbing-editor__button--local {
+  color: var(--theme);
+  background: #2f7d4a;
+  border-color: #2f7d4a;
+}
+
+.climbing-editor__button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.climbing-editor__photo-status {
+  min-height: 1.3em;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}

@@ -6,6 +6,7 @@
     {{ with .Description }}<div class="post-description">{{ . }}</div>{{ end }}
     <div class="climbing-route__facts">
       {{ with .Params.grade }}<span><b>Grade</b>{{ . }}</span>{{ end }}
+      {{ with .Params.region }}<span><b>Region</b>{{ . }}</span>{{ end }}
       {{ with .Params.location }}<span><b>Location</b>{{ . }}{{ with $.Params.area }} / {{ . }}{{ end }}</span>{{ end }}
       {{ with .Params.discipline }}<span><b>Discipline</b>{{ . }}</span>{{ end }}
       {{ with .Params.setting }}<span><b>Setting</b>{{ . }}</span>{{ end }}
@@ -20,6 +21,12 @@
   {{ if strings.Contains . "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" . }}{{ else if strings.Contains . "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" . }}{{ end }}
   <div class="climbing-video">
     <iframe src="https://www.youtube-nocookie.com/embed/{{ $youtubeID }}" title="{{ $.Title }} on YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  </div>
+  {{ end }}
+
+  {{ with .Params.photos }}
+  <div class="climbing-gallery" aria-label="Photos from {{ $.Title }}">
+    {{ range . }}<a href="{{ . | relURL }}"><img src="{{ . | relURL }}" alt="Photo from {{ $.Title }}" loading="lazy"></a>{{ end }}
   </div>
   {{ end }}
 

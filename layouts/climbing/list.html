@@ -3,6 +3,7 @@
 {{- $locations := slice -}}
 {{- $grades := slice -}}
 {{- $disciplines := slice -}}
+{{- $regions := slice -}}
 {{- range $pages -}}
   {{- with .Params.location -}}
     {{- if not (in $locations .) -}}{{- $locations = $locations | append . -}}{{- end -}}
@@ -12,6 +13,9 @@
   {{- end -}}
   {{- with .Params.discipline -}}
     {{- if not (in $disciplines .) -}}{{- $disciplines = $disciplines | append . -}}{{- end -}}
+  {{- end -}}
+  {{- with .Params.region -}}
+    {{- if not (in $regions .) -}}{{- $regions = $regions | append . -}}{{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -26,10 +30,8 @@
 {{ end }}
 
 {{- $mapPoints := slice -}}
-{{- range $pages -}}
-  {{- if and .Params.area_latitude .Params.area_longitude -}}
-    {{- $mapPoints = $mapPoints | append (dict "location" .Params.location "latitude" .Params.area_latitude "longitude" .Params.area_longitude "title" .Title "url" .RelPermalink "grade" .Params.grade) -}}
-  {{- end -}}
+{{- range site.Data.climbing.locations -}}
+  {{- $mapPoints = $mapPoints | append (dict "name" .name "parent" (.parent | default "") "latitude" .latitude "longitude" .longitude "level" (.level | default "crag") "filterRegion" (cond (eq (.level | default "crag") "region") .name (.parent | default "")) "filterLocation" (cond (eq (.level | default "crag") "region") "" .name)) -}}
 {{- end -}}
 
 {{ if $mapPoints }}
@@ -42,6 +44,9 @@
     <p>Each pin represents an area, not an individual route.</p>
   </div>
   <div id="climbing-map" class="climbing-map" data-map-points="{{ $mapPoints | jsonify }}"></div>
+  <div class="climbing-map-footer">
+    <a class="climbing-map-reset" data-map-reset href="{{ .RelPermalink }}" hidden>Back to all climbs</a>
+  </div>
 </section>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -56,18 +61,31 @@
         {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
       </select>
     </label>
+    <label>
+      <span>Region</span>
+      <select data-filter="region">
+        <option value="">All regions</option>
+        {{ range sort $regions }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
     <div class="climbing-grade-ranges" data-grade-ranges>
       <div class="climbing-grade-range" data-grade-range="bouldering">
         <span>V-scale range</span>
         <div class="climbing-range-values"><output data-grade-output="bouldering-min"></output><span>to</span><output data-grade-output="bouldering-max"></output></div>
-        <input type="range" data-grade-input="bouldering-min" aria-label="Minimum bouldering grade">
-        <input type="range" data-grade-input="bouldering-max" aria-label="Maximum bouldering grade">
+        <div class="climbing-dual-range">
+          <div class="climbing-dual-range__track" aria-hidden="true"></div>
+          <input type="range" data-grade-input="bouldering-min" aria-label="Minimum bouldering grade">
+          <input type="range" data-grade-input="bouldering-max" aria-label="Maximum bouldering grade">
+        </div>
       </div>
       <div class="climbing-grade-range" data-grade-range="sport">
         <span>YDS range</span>
         <div class="climbing-range-values"><output data-grade-output="sport-min"></output><span>to</span><output data-grade-output="sport-max"></output></div>
-        <input type="range" data-grade-input="sport-min" aria-label="Minimum sport climbing grade">
-        <input type="range" data-grade-input="sport-max" aria-label="Maximum sport climbing grade">
+        <div class="climbing-dual-range">
+          <div class="climbing-dual-range__track" aria-hidden="true"></div>
+          <input type="range" data-grade-input="sport-min" aria-label="Minimum sport climbing grade">
+          <input type="range" data-grade-input="sport-max" aria-label="Maximum sport climbing grade">
+        </div>
       </div>
     </div>
     <label>
@@ -91,8 +109,11 @@
   <p class="climbing-results" data-results aria-live="polite"></p>
 
   <div class="climbing-grid" data-route-grid>
-    {{ range $pages.ByDate.Reverse }}
-    <article class="climbing-card" data-route-card data-location="{{ .Params.location | lower | htmlEscape }}" data-grade="{{ .Params.grade | lower | htmlEscape }}" data-discipline="{{ .Params.discipline | lower | htmlEscape }}" data-date="{{ .Params.climb_date }}" data-title="{{ .Title | lower | htmlEscape }}">
+    {{- $videoPages := where $pages "Params.youtube_url" "ne" "" -}}
+    {{- $nonVideoPages := where $pages "Params.youtube_url" "=" "" -}}
+    {{ range union ($videoPages.ByParam "climb_date").Reverse ($nonVideoPages.ByParam "climb_date").Reverse }}
+    {{- $climbDate := .Params.climb_date | default (.Date.Format "2006-01-02") -}}
+    <article class="climbing-card" data-route-card data-region="{{ .Params.region | lower }}" data-location="{{ .Params.location | lower }}" data-area="{{ .Params.area | lower }}" data-grade="{{ .Params.grade | lower }}" data-discipline="{{ .Params.discipline | lower }}" data-date="{{ $climbDate }}" data-title="{{ .Title | lower }}" data-video="{{ if or .Params.youtube_url .Params.youtube_id }}1{{ else }}0{{ end }}">
       {{ $route := . }}
       {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
       {{ with $youtube }}
@@ -102,6 +123,14 @@
         <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video thumbnail for {{ $route.Title }}" loading="lazy">
         <span class="climbing-card__play" aria-hidden="true">Play</span>
       </a>
+      {{ else }}
+      {{ $thumbnail := .Params.thumbnail }}
+      {{ if not $thumbnail }}{{ with .Params.photos }}{{ $thumbnail = index . 0 }}{{ end }}{{ end }}
+      {{ with $thumbnail }}
+      <a class="climbing-card__media" href="{{ $route.RelPermalink }}" aria-label="View {{ $route.Title }}">
+        <img src="{{ . | relURL }}" alt="Photo from {{ $route.Title }}" loading="lazy">
+      </a>
+      {{ end }}
       {{ end }}
       <div class="climbing-card__body">
         <p class="climbing-card__eyebrow">{{ .Params.location }}{{ with .Params.area }} / {{ . }}{{ end }}</p>

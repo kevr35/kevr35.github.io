@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Allow: /publications/
 Disallow: /404.html
+Disallow: /route-images/
 
 Sitemap: {{ "sitemap.xml" | absURL }}

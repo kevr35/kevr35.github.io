@@ -1,0 +1,74 @@
+{{- define "main" -}}
+<div class="climbing-editor" data-climbing-editor>
+  <header class="climbing-editor__header">
+    <p class="climbing-editor__eyebrow">Moderator tool</p>
+    <h1>{{ .Title }}</h1>
+    <p>Start with a Mountain Project link or search for a route. The imported fields remain editable, and YouTube is optional. This page only downloads Markdown; it does not publish anything.</p>
+  </header>
+
+  <section class="climbing-editor__panel climbing-editor__lookup">
+    <h2>Find a route</h2>
+    <label for="mountain-project-url">Mountain Project URL <small>Paste a route page URL when you have one.</small></label>
+    <input id="mountain-project-url" type="url" data-mp-url placeholder="https://www.mountainproject.com/route/...">
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--primary" data-fetch-mp>Import Mountain Project page</button>
+    </div>
+    <div class="climbing-editor__search-row">
+      <label for="mountain-project-search">Search Mountain Project <small>Search opens in a new tab if the site blocks embedded lookup.</small></label>
+      <div class="climbing-editor__search-controls">
+        <input id="mountain-project-search" type="search" data-mp-search placeholder="Route or crag name">
+        <button type="button" class="climbing-editor__button" data-search-mp>Search</button>
+      </div>
+    </div>
+    <p class="climbing-editor__status" data-import-status role="status"></p>
+  </section>
+
+  <form class="climbing-editor__form" data-route-form>
+    <section class="climbing-editor__panel">
+      <h2>Route details</h2>
+      <div class="climbing-editor__grid">
+        <label>Route name<input name="title" required></label>
+        <label>Climb date <small>YYYY-MM-DD</small><input name="climb_date" type="date"></label>
+        <label>Region<input name="region" list="climbing-regions"><datalist id="climbing-regions">{{ range where site.Data.climbing.locations "level" "region" }}<option value="{{ .name }}">{{ end }}</datalist></label>
+        <label>Location / crag<input name="location" list="climbing-locations"><datalist id="climbing-locations">{{ range where site.Data.climbing.locations "level" "crag" }}<option value="{{ .name }}">{{ end }}</datalist></label>
+        <label>Area / sector<input name="area"></label>
+        <label>Discipline<select name="discipline"><option value="Boulder">Bouldering</option><option value="Sport">Sport</option></select></label>
+        <label>Setting<select name="setting"><option>Outdoor</option><option>Indoor</option></select></label>
+        <label>Grade<input name="grade" placeholder="V5 or 5.10a"></label>
+        <label>Ascent type<input name="ascent_type" value="Send"></label>
+        <label>Mountain Project URL<input name="mountain_project_url" type="url"></label>
+        <label>YouTube URL <small>Optional</small><input name="youtube_url" type="url" placeholder="https://www.youtube.com/watch?v=..."></label>
+      </div>
+      <label>Personal note<textarea name="personal_note" rows="5" placeholder="What this climb meant to me..."></textarea></label>
+      <label>Route report / beta<textarea name="body" rows="6" placeholder="Optional longer account of the climb."></textarea></label>
+      <label>Route photos <small>Optional. The first photo becomes the thumbnail when there is no YouTube video. Local mode resizes photos and stores them in static/route-images/&lt;route&gt;/.</small><input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple data-route-photos></label>
+      <p class="climbing-editor__photo-status" data-photo-status></p>
+      <label>Filename <small>Without `.md`; spaces become hyphens</small><input name="filename" required></label>
+      <label class="climbing-editor__checkbox"><input name="draft" type="checkbox"> Keep as draft</label>
+      <label class="climbing-editor__checkbox climbing-editor__location-prompt" data-location-prompt hidden><input name="add_location" type="checkbox" checked> Add <span data-location-name></span> to the shared location registry using the imported coordinates</label>
+        <label class="climbing-editor__checkbox climbing-editor__location-prompt" data-location-prompt hidden><input name="add_location" type="checkbox"> Add <span data-location-name></span> to the shared location registry using the imported coordinates</label>
+    </section>
+
+    <section class="climbing-editor__next-steps">
+      <h2>Next steps</h2>
+      <ol>
+        <li>Review every imported field. Change the grade if your experience differs from Mountain Project.</li>
+        <li>Add a YouTube URL only when you have a video.</li>
+        <li>In the local editor, click <strong>Save directly to content/climbing/</strong> to copy resized photos into <code>static/route-images/&lt;route&gt;/</code> and save the Markdown. Hosted mode downloads only the Markdown.</li>
+        <li>Run <code>hugo --minify</code>, review the route locally, then commit and push the file.</li>
+      </ol>
+    </section>
+
+    <div class="climbing-editor__actions">
+      <button type="submit" class="climbing-editor__button climbing-editor__button--primary">Download climbing Markdown</button>
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-save-route hidden>Save directly to content/climbing/</button>
+      <button type="button" class="climbing-editor__button" data-copy-route>Copy Markdown</button>
+    </div>
+    <label class="climbing-editor__checkbox climbing-editor__overwrite" data-overwrite-wrap hidden><input name="overwrite" type="checkbox"> Allow replacing an existing file</label>
+    <p class="climbing-editor__status" data-export-status role="status"></p>
+    <label class="climbing-editor__preview-label">Generated Markdown<textarea data-markdown-preview rows="20" readonly></textarea></label>
+  </form>
+</div>
+{{- $script := resources.Get "js/climbing-editor.js" | minify | fingerprint -}}
+<script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}

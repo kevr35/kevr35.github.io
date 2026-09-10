@@ -1,0 +1,52 @@
+# Shared crag/location records. Route files reference these by exact location name.
+- name: "Northeast Ohio"
+  latitude: 41.32087
+  longitude: -81.61892
+  level: "region"
+- name: "Chippewa Creek"
+  parent: "Northeast Ohio"
+  latitude: 41.32087
+  longitude: -81.61892
+  level: "crag"
+- name: "Red River Gorge"
+  latitude: 37.73372
+  longitude: -83.63884
+  level: "region"
+- name: "Muir Valley"
+  parent: "Red River Gorge"
+  latitude: 37.7246
+  longitude: -83.63503
+  level: "crag"
+- name: "PMRP"
+  parent: "Red River Gorge"
+  latitude: 37.64168
+  longitude: -83.71253
+  level: "crag"
+- name: "Central Ohio"
+  latitude: 40.04
+  longitude: -82.12
+  level: "region"
+- name: "Southern Mountains"
+  latitude: 35.45
+  longitude: -82.22
+  level: "region"
+- name: "Brady's Bluff"
+  parent: "Central Ohio"
+  latitude: 40.01041
+  longitude: -81.97361
+  level: "crag"
+- name: "Marne Rd"
+  parent: "Central Ohio"
+  latitude: 40.06836
+  longitude: -82.26294
+  level: "crag"
+- name: "B. Wave Wall"
+  parent: "Marne Rd"
+  latitude: 40.06836
+  longitude: -82.26294
+  level: "crag"
+- name: "Rumbling Bald"
+  parent: "Southern Mountains"
+  latitude: 35.4501
+  longitude: -82.2195
+  level: "crag"

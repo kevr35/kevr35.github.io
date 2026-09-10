@@ -45,9 +45,17 @@ The editor does not authenticate, write to GitHub, or publish changes. It contai
 
 ### Climbing
 
-Climbing entries support bouldering and sport routes, indoor or outdoor settings, grades, dates, locations, Mountain Project links, YouTube embeds, and personal notes. Use the generated route archetype and fill in its front matter.
+Climbing entries follow the Mountain Project hierarchy: `region` (for example, Red River Gorge), `location` (the crag, such as Muir Valley), and `area` (the wall or sector, such as Solarium). Shared crag coordinates live once in `data/climbing/locations.yaml`; route files store the hierarchy names. The map shows a region only when it contains multiple crags; a region with one crag shows that crag directly.
 
-The local climbing editor is available at [`/admin/climbing/`](https://kevin-reiss.com/admin/climbing/). Paste a Mountain Project route URL or search Mountain Project in a new tab, import what the page exposes, correct the grade or any other field, optionally add a YouTube URL, and download the Markdown file into `content/climbing/`. Mountain Project may block browser scraping, so every field remains editable.
+Climbing pages send a `noimageindex` directive, and future route photos should be stored under `/route-images/`, which is disallowed in `robots.txt`. These are crawler instructions, not access control: public images can still be viewed, copied, or indexed by systems that ignore them.
+
+The hosted climbing editor is available at [`/admin/climbing/`](https://kevin-reiss.com/admin/climbing/) and downloads Markdown. It also accepts multiple route photos; local mode resizes them to web-sized JPEGs under `static/route-images/<route>/` and writes `thumbnail`/`photos` metadata. For the faster local workflow, run:
+
+```powershell
+python tools/climbing_editor.py
+```
+
+Open `http://127.0.0.1:8000/admin/climbing/`. Paste a Mountain Project route URL or search Mountain Project in a new tab, review and correct every field, optionally add a YouTube URL, and click **Save directly to content/climbing/**. The local tool writes the Markdown file into the repository and rebuilds Hugo. Mountain Project may block browser scraping, so every field remains editable.
 
 ## Publishing
 
