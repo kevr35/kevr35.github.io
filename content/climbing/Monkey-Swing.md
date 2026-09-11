@@ -17,6 +17,3 @@ tags:
 draft: false
 ---
 
-Add the story of the climb here. The `personal_note` field is shown as a short
-reflection on the route page; use this body for a longer trip report, beta, or
-training notes.

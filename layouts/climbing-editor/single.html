@@ -69,6 +69,8 @@
     <label class="climbing-editor__preview-label">Generated Markdown<textarea data-markdown-preview rows="20" readonly></textarea></label>
   </form>
 </div>
+  {{ $archetype := readFile "archetypes/climbing-route.md" }}
+  <script type="application/json" data-climbing-archetype>{{ $archetype | jsonify }}</script>
 {{- $script := resources.Get "js/climbing-editor.js" | minify | fingerprint -}}
 <script defer src="{{ $script.RelPermalink }}"></script>
 {{- end -}}

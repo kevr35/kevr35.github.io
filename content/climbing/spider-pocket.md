@@ -17,4 +17,4 @@ tags:
 draft: false
 ---
 
-Add the story of the climb here.
+

@@ -7,4 +7,3 @@ An important piece of my academic journey has been the time I spend connecting w
 
 Rock climbing has taken me on many journeys over the past few years, from the lowly storm drains of central Ohio to the majestic boulder fields in the Swiss Alps. 
 
-Each entry can include a grade, location, date, discipline, a short personal note, and an optional YouTube video. Use the controls below to browse the log once entries have been added.

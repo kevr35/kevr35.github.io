@@ -14,6 +14,10 @@
   const locationName = root.querySelector("[data-location-name]");
   const isLocalEditor = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const field = (name) => form.elements[name];
+  const archetypeSource = root.parentElement.querySelector("[data-climbing-archetype]");
+  const archetypeText = archetypeSource ? JSON.parse(archetypeSource.textContent) : "";
+  const archetypeFields = [...(archetypeText.match(/^([A-Za-z_][A-Za-z0-9_]*):/gm) || [])]
+    .map((line) => line.replace(/:$/, ""));
   const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
   const slugify = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const markdownFilename = (value) => `${slugify(String(value || "").replace(/\.md$/i, "")) || "climbing-route"}.md`;
@@ -30,30 +34,31 @@
   const set = (name, value) => { if (value) field(name).value = clean(value); };
 
   const updatePreview = () => {
-    const lines = [
-      "---",
-      `title: ${JSON.stringify(clean(field("title").value))}`,
-      `date: ${new Date().toISOString()}`,
-      `climb_date: ${JSON.stringify(field("climb_date").value)}`,
-      `region: ${JSON.stringify(clean(field("region").value))}`,
-      `location: ${JSON.stringify(clean(field("location").value))}`,
-      `area: ${JSON.stringify(clean(field("area").value))}`,
-      `discipline: ${JSON.stringify(field("discipline").value)}`,
-      `setting: ${JSON.stringify(field("setting").value)}`,
-      `grade: ${JSON.stringify(clean(field("grade").value))}`,
-      `ascent_type: ${JSON.stringify(clean(field("ascent_type").value))}`,
-      `mountain_project_url: ${JSON.stringify(clean(field("mountain_project_url").value))}`,
-      `youtube_url: ${JSON.stringify(clean(field("youtube_url").value))}`,
-      ...(selectedPhotos.length ? [`thumbnail: ${JSON.stringify(`route-images/${slugify(field("filename").value)}/${selectedPhotos[0].output}`)}`, "photos:", ...selectedPhotos.map((photo) => `  - ${JSON.stringify(`route-images/${slugify(field("filename").value)}/${photo.output}`)}`)] : []),
-      `personal_note: ${JSON.stringify(clean(field("personal_note").value))}`,
-      "tags:",
-      "  - \"Climbing\"",
-      `draft: ${field("draft").checked}`,
-      "---",
-      "",
-      field("body").value || "Add the story of the climb here.",
-      "",
-    ];
+    const values = {
+      title: JSON.stringify(clean(field("title").value)),
+      region: JSON.stringify(clean(field("region").value)),
+      date: new Date().toISOString(),
+      climb_date: JSON.stringify(field("climb_date").value),
+      location: JSON.stringify(clean(field("location").value)),
+      area: JSON.stringify(clean(field("area").value)),
+      discipline: JSON.stringify(field("discipline").value),
+      setting: JSON.stringify(field("setting").value),
+      grade: JSON.stringify(clean(field("grade").value)),
+      ascent_type: JSON.stringify(clean(field("ascent_type").value)),
+      mountain_project_url: JSON.stringify(clean(field("mountain_project_url").value)),
+      youtube_url: JSON.stringify(clean(field("youtube_url").value)),
+      thumbnail: JSON.stringify(selectedPhotos.length ? `route-images/${slugify(field("filename").value)}/${selectedPhotos[0].output}` : ""),
+      photos: selectedPhotos.length ? ["photos:", ...selectedPhotos.map((photo) => `  - ${JSON.stringify(`route-images/${slugify(field("filename").value)}/${photo.output}`)}`)] : ["photos: []"],
+      personal_note: JSON.stringify(clean(field("personal_note").value)),
+      tags: ["tags:", "  - \"Climbing\""],
+      draft: String(field("draft").checked),
+    };
+    const lines = ["---"];
+    (archetypeFields.length ? archetypeFields : Object.keys(values)).forEach((name) => {
+      if (name === "photos" || name === "tags") lines.push(...values[name]);
+      else if (values[name] !== undefined) lines.push(`${name}: ${values[name]}`);
+    });
+    lines.push("---", "", field("body").value, "");
     preview.value = lines.join("\n");
   };
 
