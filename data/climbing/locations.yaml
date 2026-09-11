@@ -40,11 +40,6 @@
   latitude: 40.06836
   longitude: -82.26294
   level: "crag"
-- name: "B. Wave Wall"
-  parent: "Marne Rd"
-  latitude: 40.06836
-  longitude: -82.26294
-  level: "crag"
 - name: "Rumbling Bald"
   parent: "Southern Mountains"
   latitude: 35.4501

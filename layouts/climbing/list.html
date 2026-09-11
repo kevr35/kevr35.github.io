@@ -55,17 +55,17 @@
 <section class="climbing-browser" data-climbing-browser>
   <div class="climbing-controls" aria-label="Filter climbing entries">
     <label>
-      <span>Location</span>
-      <select data-filter="location">
-        <option value="">All locations</option>
-        {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
-      </select>
-    </label>
-    <label>
       <span>Region</span>
       <select data-filter="region">
         <option value="">All regions</option>
         {{ range sort $regions }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <label>
+      <span>Location</span>
+      <select data-filter="location">
+        <option value="">All locations</option>
+        {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
       </select>
     </label>
     <div class="climbing-grade-ranges" data-grade-ranges>

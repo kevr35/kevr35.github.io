@@ -21,11 +21,18 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const queryFilters = new URLSearchParams(window.location.search);
+  let scopedRegion = normalizeFilterValue(queryFilters.get("region"));
+  let scopedLocation = normalizeFilterValue(queryFilters.get("location"));
   let scopedArea = normalizeFilterValue(queryFilters.get("area"));
   const mapElement = document.querySelector("[data-map-points]");
   const mapReset = document.querySelector("[data-map-reset]");
   if (mapReset && (window.location.search.includes("region=") || window.location.search.includes("location=") || window.location.search.includes("area="))) mapReset.hidden = false;
   let refreshMap = () => {};
+  const currentScope = () => ({
+    region: normalizeFilterValue(document.querySelector('[data-filter="region"]')?.value) || scopedRegion,
+    location: normalizeFilterValue(document.querySelector('[data-filter="location"]')?.value) || scopedLocation,
+    area: scopedArea,
+  });
   const showMapFallback = (message = "Map tiles could not be loaded. The climbing location data is still available below.") => {
     if (mapElement && !mapElement.dataset.mapInitialized) {
       mapElement.dataset.mapFailed = "true";
@@ -65,9 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return point.level !== "region" || hasMultipleCrags(point);
     });
     const scopedMapPoints = () => {
-      const selectedLocation = normalizeFilterValue(document.querySelector('[data-filter="location"]')?.value);
-      const selectedRegion = normalizeFilterValue(document.querySelector('[data-filter="region"]')?.value || queryFilters.get("region"));
-      const selectedArea = scopedArea;
+      const scope = currentScope();
+      const selectedLocation = scope.location;
+      const selectedRegion = scope.region;
+      const selectedArea = scope.area;
       if (!selectedLocation && !selectedRegion) return points;
       const location = points.find((point) => normalizeFilterValue(point.name) === selectedLocation);
       const childLocations = points.filter((point) => normalizeFilterValue(point.parent) === (selectedLocation || selectedRegion));
@@ -76,8 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const pointParent = normalizeFilterValue(point.parent);
         const selectedParent = normalizeFilterValue(location?.parent);
         const pointRegion = normalizeFilterValue(point.level === "region" ? point.name : point.parent);
-        if (selectedRegion && !selectedLocation) return pointRegion === selectedRegion || pointParent === selectedRegion;
-        if (selectedArea) return pointName === selectedLocation || pointName === selectedArea || pointParent === selectedArea || pointName === selectedParent;
+        if (selectedRegion && !selectedLocation) return pointParent === selectedRegion;
+        if (selectedLocation) return pointName === selectedLocation;
         if (!selectedArea && childLocations.length) return pointParent === selectedLocation;
         return pointName === selectedLocation || pointParent === selectedLocation || (selectedParent && pointName === selectedParent);
       });
@@ -93,10 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const markers = visiblePoints.map((point) => {
         const parent = point.parent ? points.find((candidate) => candidate.name === point.parent) : null;
         const children = points.filter((candidate) => candidate.parent === point.name);
-        const parentChildren = parent ? points.filter((candidate) => candidate.parent === parent.name) : [];
-        const singletonRegion = parent && parentChildren.length === 1;
         const titlePoint = point;
-        const related = singletonRegion ? [] : [parent, ...children].filter(Boolean);
+        const related = point.level === "region" ? children : [];
         const links = [...new Map(related.map((relatedPoint) => [relatedPoint.name, locationLink(relatedPoint)])).values()];
         const popup = `<strong>${locationLink(titlePoint)}</strong>${links.length ? `<ul>${links.map((link) => `<li>${link}</li>`).join("")}</ul>` : ""}`;
         return L.marker([Number(point.latitude), Number(point.longitude)]).addTo(map).bindPopup(popup);
@@ -157,8 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const cardGrades = new Map(cards.map((card) => [card, gradeInfo(card)]));
   const locationFilter = browser.querySelector('[data-filter="location"]');
   const regionFilter = browser.querySelector('[data-filter="region"]');
-  const initialRegion = normalizeFilterValue(queryFilters.get("region"));
-  const initialLocation = normalizeFilterValue(queryFilters.get("location"));
+  const initialRegion = scopedRegion;
+  const initialLocation = scopedLocation;
   if (initialRegion && regionFilter) {
     const matchingRegion = [...regionFilter.options].find((option) => normalizeFilterValue(option.value) === initialRegion);
     if (matchingRegion) regionFilter.value = matchingRegion.value;
@@ -233,7 +239,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const visible = cards.filter((card) => {
       const grade = cardGrades.get(card);
       const matchesBasicFilters = Object.entries(activeFilters).every(([key, value]) => !value || card.dataset[key] === value);
-      const matchesMapScope = !scopedArea || normalizeFilterValue(card.dataset.area).startsWith(scopedArea);
+      const scope = currentScope();
+      const matchesMapScope = (!scope.region || normalizeFilterValue(card.dataset.region) === scope.region)
+        && (!scope.location || normalizeFilterValue(card.dataset.location) === scope.location)
+        && (!scope.area || normalizeFilterValue(card.dataset.area).startsWith(scope.area));
       const range = ranges[grade.kind];
       if (!matchesBasicFilters || !matchesMapScope || !range) return matchesBasicFilters && matchesMapScope;
 
@@ -262,6 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   filters.forEach((filter) => filter.addEventListener("change", () => {
     if (filter.dataset.filter === "region") {
+      scopedRegion = normalizeFilterValue(filter.value);
+      scopedLocation = "";
       const url = new URL(window.location.href);
       if (filter.value) url.searchParams.set("region", filter.value);
       else url.searchParams.delete("region");
@@ -272,6 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (locationFilter) locationFilter.value = "";
       if (mapReset) mapReset.hidden = !filter.value;
     } else if (filter.dataset.filter === "location") {
+      scopedLocation = normalizeFilterValue(filter.value);
       scopedArea = "";
       const url = new URL(window.location.href);
       if (filter.value) url.searchParams.set("location", filter.value);
