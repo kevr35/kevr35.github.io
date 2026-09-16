@@ -1,12 +1,14 @@
 {{- define "main" -}}
 {{- $pages := where .RegularPages "Params.hidden" "ne" true -}}
-{{- $locations := slice -}}
+{{- $climbingURL := .RelPermalink -}}
+{{- $crags := slice -}}
 {{- $grades := slice -}}
 {{- $disciplines := slice -}}
-{{- $regions := slice -}}
+{{- $locations := slice -}}
 {{- range $pages -}}
-  {{- with .Params.location -}}
-    {{- if not (in $locations .) -}}{{- $locations = $locations | append . -}}{{- end -}}
+  {{- $cragRecord := index (where site.Data.climbing.locations "name" .Params.crag) 0 -}}
+  {{- with .Params.crag -}}
+    {{- if not (in $crags .) -}}{{- $crags = $crags | append . -}}{{- end -}}
   {{- end -}}
   {{- with .Params.grade -}}
     {{- if not (in $grades .) -}}{{- $grades = $grades | append . -}}{{- end -}}
@@ -14,8 +16,8 @@
   {{- with .Params.discipline -}}
     {{- if not (in $disciplines .) -}}{{- $disciplines = $disciplines | append . -}}{{- end -}}
   {{- end -}}
-  {{- with .Params.region -}}
-    {{- if not (in $regions .) -}}{{- $regions = $regions | append . -}}{{- end -}}
+  {{- with $cragRecord.parent -}}
+    {{- if not (in $locations .) -}}{{- $locations = $locations | append . -}}{{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -31,7 +33,7 @@
 
 {{- $mapPoints := slice -}}
 {{- range site.Data.climbing.locations -}}
-  {{- $mapPoints = $mapPoints | append (dict "name" .name "parent" (.parent | default "") "latitude" .latitude "longitude" .longitude "level" (.level | default "crag") "filterRegion" (cond (eq (.level | default "crag") "region") .name (.parent | default "")) "filterLocation" (cond (eq (.level | default "crag") "region") "" .name)) -}}
+  {{- $mapPoints = $mapPoints | append (dict "name" .name "parent" (.parent | default "") "latitude" .latitude "longitude" .longitude "level" (.level | default "crag") "filterLocation" (cond (eq (.level | default "crag") "location") .name (.parent | default "")) "filterCrag" (cond (eq (.level | default "crag") "location") "" .name)) -}}
 {{- end -}}
 
 {{ if $mapPoints }}
@@ -55,17 +57,17 @@
 <section class="climbing-browser" data-climbing-browser>
   <div class="climbing-controls" aria-label="Filter climbing entries">
     <label>
-      <span>Region</span>
-      <select data-filter="region">
-        <option value="">All regions</option>
-        {{ range sort $regions }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
-      </select>
-    </label>
-    <label>
       <span>Location</span>
       <select data-filter="location">
         <option value="">All locations</option>
         {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <label>
+      <span>Crag</span>
+      <select data-filter="crag">
+        <option value="">All crags</option>
+        {{ range sort $crags }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
       </select>
     </label>
     <div class="climbing-grade-ranges" data-grade-ranges>
@@ -102,6 +104,7 @@
         <option value="date-asc">Oldest first</option>
         <option value="grade">Grade</option>
         <option value="title">Name</option>
+        <option value="location">Location</option>
       </select>
     </label>
   </div>
@@ -113,7 +116,9 @@
     {{- $nonVideoPages := where $pages "Params.youtube_url" "=" "" -}}
     {{ range union ($videoPages.ByParam "climb_date").Reverse ($nonVideoPages.ByParam "climb_date").Reverse }}
     {{- $climbDate := .Params.climb_date | default (.Date.Format "2006-01-02") -}}
-    <article class="climbing-card" data-route-card data-region="{{ .Params.region | lower }}" data-location="{{ .Params.location | lower }}" data-area="{{ .Params.area | lower }}" data-grade="{{ .Params.grade | lower }}" data-discipline="{{ .Params.discipline | lower }}" data-date="{{ $climbDate }}" data-title="{{ .Title | lower }}" data-video="{{ if or .Params.youtube_url .Params.youtube_id }}1{{ else }}0{{ end }}">
+    {{- $cragRecord := index (where site.Data.climbing.locations "name" .Params.crag) 0 -}}
+    {{- $routeLocation := $cragRecord.parent -}}
+    <article class="climbing-card" data-route-card data-route-file="{{ .File.LogicalName }}" data-location="{{ $routeLocation | lower }}" data-crag="{{ .Params.crag | lower }}" data-wall="{{ .Params.wall | lower }}" data-grade="{{ .Params.grade | lower }}" data-discipline="{{ .Params.discipline | lower }}" data-date="{{ $climbDate }}" data-title="{{ .Title | lower }}" data-video="{{ if or .Params.youtube_url .Params.youtube_id }}1{{ else }}0{{ end }}">
       {{ $route := . }}
       {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
       {{ with $youtube }}
@@ -133,9 +138,22 @@
       {{ end }}
       {{ end }}
       <div class="climbing-card__body">
-        <p class="climbing-card__eyebrow">{{ .Params.location }}{{ with .Params.area }} / {{ . }}{{ end }}</p>
+        <p class="climbing-card__eyebrow">
+          {{ with $routeLocation }}<a href="{{ $climbingURL }}?{{ querify "location" . | safeURL }}">{{ . }}</a> / {{ end }}
+          {{ with $route.Params.crag }}<a href="{{ $climbingURL }}?{{ querify "location" $routeLocation "crag" . | safeURL }}">{{ . }}</a>{{ end }}
+          {{ with $route.Params.wall }} / <a href="{{ $climbingURL }}?{{ querify "location" $routeLocation "crag" $route.Params.crag "wall" . | safeURL }}">{{ . }}</a>{{ end }}
+        </p>
         <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
-        <p class="climbing-card__meta">{{ .Params.grade }}{{ with .Params.grade_system }} {{ . }}{{ end }}{{ with .Params.discipline }} · {{ . }}{{ end }}{{ with .Params.climb_date }} · {{ time.Format "Jan 2, 2006" . }}{{ end }}</p>
+        <p class="climbing-card__meta">
+          {{ .Params.grade }}{{ with .Params.grade_system }} {{ . }}{{ end }}{{ with .Params.discipline }} · {{ . }}{{ end }}{{ with .Params.climb_date }} · {{ time.Format "Jan 2, 2006" . }}{{ end }}
+          {{- $isFlashed := false -}}
+          {{- if eq (.Params.discipline | lower) "boulder" -}}
+            {{- if eq (.Params.ascent_type | lower) "flash" -}}{{- $isFlashed = true -}}{{- end -}}
+          {{- else -}}
+            {{- if or (eq (.Params.ascent_type | lower) "flash") (eq (.Params.ascent_type | lower) "onsight") -}}{{- $isFlashed = true -}}{{- end -}}
+          {{- end -}}
+          {{- if $isFlashed }} <span class="climbing-flash-badge" title="{{ .Params.ascent_type }}">⚡</span>{{ end -}}
+        </p>
         {{ with .Params.personal_note }}<p>{{ . }}</p>{{ end }}
         {{ with .Params.mountain_project_url }}<a class="mountain-project-link" href="{{ . }}" target="_blank" rel="noopener"><img src="{{ "favicon/mountain-project.png" | relURL }}" alt="" width="20" height="20"><span>Mountain Project</span><span aria-hidden="true">&#8599;</span></a>{{ end }}
       </div>
@@ -146,6 +164,14 @@
 </section>
 
 {{- with resources.Get "js/climbing.js" -}}
+  {{- $script := . | minify | fingerprint -}}
+  <script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
+{{- with resources.Get "js/climbing-route-dialog.js" -}}
+  {{- $script := . | minify | fingerprint -}}
+  <script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
+{{- with resources.Get "js/climbing-manager.js" -}}
   {{- $script := . | minify | fingerprint -}}
   <script defer src="{{ $script.RelPermalink }}"></script>
 {{- end -}}

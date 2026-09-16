@@ -271,6 +271,165 @@
   display: none;
 }
 
+.climbing-card__edit {
+  display: none;
+  margin-top: 0.8rem;
+  padding: 0.45rem 0.65rem;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.climbing-browser--editing .climbing-card__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.climbing-markdown-dialog {
+  width: min(56rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.climbing-markdown-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.climbing-markdown-dialog__content {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.climbing-markdown-dialog__content h2,
+.climbing-markdown-dialog__content p {
+  margin: 0;
+}
+
+.climbing-markdown-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 22rem;
+  resize: vertical;
+  color: var(--primary);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.climbing-markdown-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.climbing-route-dialog {
+  width: min(54rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.climbing-route-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.climbing-route-dialog__content {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+}
+
+.climbing-route-dialog__content h2,
+.climbing-route-dialog__content p {
+  margin: 0;
+}
+
+.climbing-route-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.climbing-route-dialog label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.climbing-route-dialog input,
+.climbing-route-dialog select,
+.climbing-route-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.6rem;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+}
+
+.climbing-route-dialog textarea {
+  resize: vertical;
+}
+
+.climbing-route-dialog__draft {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.climbing-route-dialog__draft input {
+  width: auto;
+}
+
+.climbing-route-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.climbing-route-dialog__actions button {
+  padding: 0.55rem 0.8rem;
+  color: var(--primary);
+  background: var(--tertiary);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.climbing-route-dialog__actions button[data-route-dialog-save] {
+  color: var(--theme);
+  background: #2f7d4a;
+  border-color: #2f7d4a;
+}
+
+@media (max-width: 640px) {
+  .climbing-route-dialog__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .climbing-card__media {
   position: relative;
   display: block;
@@ -316,8 +475,20 @@
   color: var(--primary);
 }
 
-.climbing-card__body > p:last-child {
-  margin-bottom: 0;
+.climbing-flash-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 1rem;
+  animation: climbing-flash-pulse 2s infinite;
+}
+
+@keyframes climbing-flash-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .mountain-project-link {

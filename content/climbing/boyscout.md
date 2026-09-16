@@ -1,10 +1,9 @@
 ---
 title: "Boyscout"
-region: "Northeast Ohio"
 date: 2026-09-10T17:43:45.052Z
 climb_date: "2024-02-03"
-location: "Chippewa Creek"
-area: "Downstream"
+crag: "Chippewa Creek"
+wall: "Downstream"
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V6"

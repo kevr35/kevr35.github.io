@@ -1,17 +1,27 @@
-# Shared crag/location records. Route files reference these by exact location name.
+# Shared state, location, and crag records. Route files reference these by exact name.
+- name: "Ohio"
+  latitude: 40.3
+  longitude: -82.8
+  level: "state"
 - name: "Northeast Ohio"
+  parent: "Ohio"
   latitude: 41.32087
   longitude: -81.61892
-  level: "region"
+  level: "location"
 - name: "Chippewa Creek"
   parent: "Northeast Ohio"
   latitude: 41.32087
   longitude: -81.61892
   level: "crag"
-- name: "Red River Gorge"
+- name: "Kentucky"
   latitude: 37.73372
   longitude: -83.63884
-  level: "region"
+  level: "state"
+- name: "Red River Gorge"
+  parent: "Kentucky"
+  latitude: 37.73372
+  longitude: -83.63884
+  level: "location"
 - name: "Muir Valley"
   parent: "Red River Gorge"
   latitude: 37.7246
@@ -22,26 +32,379 @@
   latitude: 37.64168
   longitude: -83.71253
   level: "crag"
+- name: "Northern Gorge"
+  parent: "Red River Gorge"
+  latitude: 37.84495
+  longitude: -83.64369
+  level: "crag"
+- name: "Natural Bridge Region"
+  parent: "Red River Gorge"
+  latitude: 37.75195
+  longitude: -83.66364
+  level: "crag"
 - name: "Central Ohio"
+  parent: "Ohio"
   latitude: 40.04
   longitude: -82.12
-  level: "region"
+  level: "location"
 - name: "Southern Mountains"
+  parent: "North Carolina"
   latitude: 35.45
   longitude: -82.22
-  level: "region"
+  level: "location"
 - name: "Brady's Bluff"
   parent: "Central Ohio"
   latitude: 40.01041
   longitude: -81.97361
   level: "crag"
-- name: "Marne Rd"
-  parent: "Central Ohio"
-  latitude: 40.06836
-  longitude: -82.26294
-  level: "crag"
 - name: "Rumbling Bald"
   parent: "Southern Mountains"
   latitude: 35.4501
   longitude: -82.2195
+  level: "crag"
+- name: "Flat Rocks"
+  parent: "Central Ohio"
+  latitude: 39.73403
+  longitude: -82.60399
+  level: "crag"
+- name: "New Hampshire"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "state"
+- name: "Rumney"
+  parent: "New Hampshire"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "location"
+- name: "Rhode Island"
+  latitude: 41.8976
+  longitude: -71.4341
+  level: "state"
+- name: "Lincoln Woods"
+  parent: "Rhode Island"
+  latitude: 41.8976
+  longitude: -71.4341
+  level: "location"
+- name: "West Virginia"
+  latitude: 39.64162
+  longitude: -79.81945
+  level: "state"
+- name: "Coopers Rock"
+  parent: "West Virginia"
+  latitude: 39.6412
+  longitude: -79.8194
+  level: "location"
+- name: "Rhododendron Trail Areas"
+  parent: "Coopers Rock"
+  latitude: 39.6455
+  longitude: -79.8177
+  level: "crag"
+- name: "Tilted Tree"
+  parent: "Coopers Rock"
+  latitude: 39.6389
+  longitude: -79.811
+  level: "crag"
+- name: "Upper Rock City"
+  parent: "Coopers Rock"
+  latitude: 39.652
+  longitude: -79.8236
+  level: "crag"
+- name: "New River Gorge"
+  parent: "West Virginia"
+  latitude: 38.2338
+  longitude: -80.8552
+  level: "location"
+- name: "Cotton Hill"
+  parent: "New River Gorge"
+  latitude: 38.1533
+  longitude: -80.9278
+  level: "crag"
+- name: "Endless Wall"
+  parent: "New River Gorge"
+  latitude: 38.1444
+  longitude: -80.9106
+  level: "crag"
+- name: "Lower New River Gorge Bouldering"
+  parent: "New River Gorge"
+  latitude: 38.2025
+  longitude: -80.8844
+  level: "crag"
+- name: "Interp Boulders"
+  parent: "New River Gorge"
+  latitude: 38.3189
+  longitude: -80.7733
+  level: "crag"
+- name: "Meadow Top Boulders"
+  parent: "New River Gorge"
+  latitude: 38.3328
+  longitude: -80.8217
+  level: "crag"
+- name: "Summersville (Gauley River) Area"
+  parent: "New River Gorge"
+  latitude: 38.5706
+  longitude: -80.8581
+  level: "crag"
+- name: "Upper Meadow"
+  parent: "New River Gorge"
+  latitude: 38.3417
+  longitude: -80.8403
+  level: "crag"
+- name: "Connecticut"
+  latitude: 41.42947
+  longitude: -72.88149
+  level: "state"
+- name: "CT Bouldering"
+  parent: "Connecticut"
+  latitude: 41.42947
+  longitude: -72.88149
+  level: "location"
+- name: "Sleeping Giant"
+  parent: "CT Bouldering"
+  latitude: 41.42947
+  longitude: -72.88149
+  level: "crag"
+- name: "Bald Rock"
+  parent: "CT Bouldering"
+  latitude: 41.33859
+  longitude: -73.40685
+  level: "crag"
+- name: "Paugussett State Forest (Lower Section)"
+  parent: "CT Bouldering"
+  latitude: 41.40163
+  longitude: -73.19353
+  level: "crag"
+- name: "Vermont"
+  latitude: 44.55581
+  longitude: -72.79591
+  level: "state"
+- name: "Northern Vermont"
+  parent: "Vermont"
+  latitude: 44.55581
+  longitude: -72.79591
+  level: "location"
+- name: "Central Valley"
+  parent: "Connecticut"
+  latitude: 41.6175
+  longitude: -72.82342
+  level: "location"
+- name: "Ragged Mountain"
+  parent: "Central Valley"
+  latitude: 41.6175
+  longitude: -72.82342
+  level: "crag"
+- name: "Bear Rock"
+  parent: "Central Valley"
+  latitude: 41.47119
+  longitude: -72.64888
+  level: "crag"
+- name: "Kancamagus"
+  parent: "New Hampshire"
+  latitude: 44.00554
+  longitude: -71.23822
+  level: "location"
+- name: "North Carolina"
+  latitude: 35.9488
+  longitude: -80.03792
+  level: "state"
+- name: "Massachusetts"
+  latitude: 42.32665
+  longitude: -71.17776
+  level: "state"
+- name: "Eastern, MA"
+  parent: "Massachusetts"
+  latitude: 42.32665
+  longitude: -71.17776
+  level: "location"
+- name: "Central Vermont"
+  parent: "Vermont"
+  latitude: 43.97487
+  longitude: -72.2945
+  level: "location"
+- name: "North Conway"
+  parent: "New Hampshire"
+  latitude: 44.08533
+  longitude: -71.16607
+  level: "location"
+- name: "Pawtuckaway"
+  parent: "New Hampshire"
+  latitude: 43.1181
+  longitude: -71.1787
+  level: "location"
+- name: "Cathedral Ledge"
+  parent: "New Hampshire"
+  latitude: 44.064
+  longitude: -71.1663
+  level: "location"
+- name: "Colorado"
+  latitude: 39.98948
+  longitude: -105.29028
+  level: "state"
+- name: "Boulder"
+  parent: "Colorado"
+  latitude: 39.98948
+  longitude: -105.29028
+  level: "location"
+- name: "Southeast Ohio"
+  parent: "Ohio"
+  latitude: 39.45605
+  longitude: -82.55801
+  level: "location"
+- name: "Eastern Ohio"
+  parent: "Ohio"
+  latitude: 40.11239
+  longitude: -81.52954
+  level: "location"
+- name: "Salt Fork"
+  parent: "Eastern Ohio"
+  latitude: 40.11239
+  longitude: -81.52954
+  level: "crag"
+- name: "Western MA"
+  parent: "Massachusetts"
+  latitude: 42.53647
+  longitude: -72.49203
+  level: "location"
+- name: "New York"
+  latitude: 41.7375
+  longitude: -74.1872
+  level: "state"
+- name: "The Gunks"
+  parent: "New York"
+  latitude: 41.7375
+  longitude: -74.1872
+  level: "location"
+- name: "Warm Up Area"
+  parent: "Lincoln Woods"
+  latitude: 41.8976
+  longitude: -71.4341
+  level: "crag"
+- name: "Smugglers' Notch Bouldering"
+  parent: "Northern Vermont"
+  latitude: 44.55581
+  longitude: -72.79591
+  level: "crag"
+- name: "Sundown Bouldering"
+  parent: "Kancamagus"
+  latitude: 44.00554
+  longitude: -71.23822
+  level: "crag"
+- name: "Marne Road"
+  parent: "Central Ohio"
+  latitude: 40.04
+  longitude: -82.12
+  level: "crag"
+- name: "Hammond Pond"
+  parent: "Eastern, MA"
+  latitude: 42.32665
+  longitude: -71.17776
+  level: "crag"
+- name: "Eagle Hollow"
+  parent: "Central Vermont"
+  latitude: 43.97487
+  longitude: -72.2945
+  level: "crag"
+- name: "Humphrey's Ledge"
+  parent: "North Conway"
+  latitude: 44.08533
+  longitude: -71.16607
+  level: "crag"
+- name: "Cathedral Ledge Bouldering"
+  parent: "Cathedral Ledge"
+  latitude: 44.064
+  longitude: -71.1663
+  level: "crag"
+- name: "Flatirons"
+  parent: "Boulder"
+  latitude: 39.98948
+  longitude: -105.29028
+  level: "crag"
+- name: "Hocking Hills State Forest"
+  parent: "Southeast Ohio"
+  latitude: 39.45605
+  longitude: -82.55801
+  level: "crag"
+- name: "Happy Valley and The Hideaway"
+  parent: "Western MA"
+  latitude: 42.53647
+  longitude: -72.49203
+  level: "crag"
+- name: "Trapps Bouldering"
+  parent: "The Gunks"
+  latitude: 41.7375
+  longitude: -74.1872
+  level: "crag"
+- name: "The Parking Lot Wall"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Armed and Dangerous (Main Cliff Left)"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Bonsai"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Main Cliff Right"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Below the New Wave"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Kennel Wall"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "The Hinterlands"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "The Meadows"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Waimea"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Main Parking Lot/Meadows Bouldering"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "The Main Cliff"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Orange Crush"
+  parent: "Rumney"
+  latitude: 43.80273
+  longitude: -71.83029
+  level: "crag"
+- name: "Cliff Boulders"
+  parent: "Pawtuckaway"
+  latitude: 43.1181
+  longitude: -71.1787
+  level: "crag"
+- name: "The Swamp Boulders"
+  parent: "Pawtuckaway"
+  latitude: 43.1181
+  longitude: -71.1787
+  level: "crag"
+- name: "Hillside"
+  parent: "Pawtuckaway"
+  latitude: 43.1181
+  longitude: -71.1787
   level: "crag"

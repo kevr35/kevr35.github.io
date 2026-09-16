@@ -2,9 +2,8 @@
 title: "Red Sleigh Down"
 date: 2026-09-10T18:32:16.985Z
 climb_date: "2024-03-10"
-region: "Southern Mountains"
-location: "Rumbling Bald"
-area: "Cluster"
+crag: "Rumbling Bald"
+wall: "Cluster"
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V5"

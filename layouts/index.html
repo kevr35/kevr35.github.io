@@ -56,14 +56,34 @@
     <a class="home-feature__link" href="{{ "climbing/" | relLangURL }}">Visit the climbing log <span aria-hidden="true">&#8594;</span></a>
   </div>
   <div class="home-climbing-grid">
-    {{ range first 3 (where site.RegularPages "Section" "climbing").ByDate.Reverse }}
-    {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
+    {{ $climbingPages := where site.RegularPages "Section" "climbing" }}
+    {{ $rankedVideoPages := slice }}
+    {{ range $climbingPages }}
+      {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
+      {{ if $youtube }}
+        {{ $grade := lower (.Params.grade | default "") }}
+        {{ $gradeRank := 0 }}
+        {{ if findRE `^v\d+` $grade }}
+          {{ $gradeRank = add 19 (mul 2 (int (replaceRE `^v(\d+).*` "$1" $grade))) }}
+        {{ else if findRE `^5\.\d+` $grade }}
+          {{ $gradeRank = mul 4 (int (replaceRE `^5\.(\d+).*` "$1" $grade)) }}
+          {{ if findRE `a` $grade }}{{ $gradeRank = add $gradeRank 1 }}{{ end }}
+          {{ if findRE `b` $grade }}{{ $gradeRank = add $gradeRank 2 }}{{ end }}
+          {{ if findRE `c` $grade }}{{ $gradeRank = add $gradeRank 3 }}{{ end }}
+          {{ if findRE `d` $grade }}{{ $gradeRank = add $gradeRank 4 }}{{ end }}
+        {{ end }}
+        {{ $rankedVideoPages = $rankedVideoPages | append (dict "page" . "gradeRank" $gradeRank) }}
+      {{ end }}
+    {{ end }}
+    {{ range first 3 (sort $rankedVideoPages "gradeRank" "desc") }}
+    {{ $route := .page }}
+    {{ $youtube := $route.Params.youtube_url | default $route.Params.youtube_id }}
     {{ if $youtube }}
       {{ $youtubeID := $youtube }}
       {{ if strings.Contains $youtube "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ else if strings.Contains $youtube "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ end }}
-      <a class="home-climbing-card" href="{{ .RelPermalink }}">
-        <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video preview for {{ .Title }}" loading="lazy">
-        <span><strong>{{ .Title }}</strong><small>{{ .Params.location }} · {{ .Params.grade }}</small></span>
+      <a class="home-climbing-card" href="{{ $route.RelPermalink }}">
+        <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video preview for {{ $route.Title }}" loading="lazy">
+        <span><strong>{{ $route.Title }}</strong><small>{{ $route.Params.crag }} · {{ $route.Params.grade }}</small></span>
       </a>
     {{ end }}
     {{ end }}

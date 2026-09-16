@@ -1,10 +1,9 @@
 ---
 title: "Route name"
-region: "Region"
 date: {{ .Date }}
 climb_date: "YYYY-MM-DD"
-location: "Crag or gym"
-area: "Wall, sector, or boulder"
+crag: "Crag or gym"
+wall: "Wall, sector, or boulder (optional)"
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V4"
