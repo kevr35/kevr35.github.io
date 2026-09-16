@@ -2,6 +2,7 @@
   const root = document.querySelector("[data-publication-editor]");
   if (!root) return;
 
+  const isLocalEditor = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const input = root.querySelector("[data-bibtex-input]");
   const parseButton = root.querySelector("[data-parse]");
   const fileInput = root.querySelector("[data-bib-file]");
@@ -18,8 +19,11 @@
   const imageOptions = root.querySelector("[data-image-options]");
   const imageMode = root.querySelector("[data-image-mode]");
   const imageHelp = root.querySelector("[data-image-help]");
+  const saveButton = root.querySelector("[data-save-locally]");
+  const overwriteWrap = root.querySelector("[data-overwrite-wrap]");
   let entries = [];
   let selectedEntry = null;
+  let originalFilename = "";
 
   const citationKeys = [
     "author", "title", "year", "date", "journal", "booktitle", "publisher",
@@ -287,6 +291,9 @@
     field("abstract").value = values.abstract || "";
     field("filename").value = slugify(values.title || entry.key);
     field("draft").checked = false;
+    field("overwrite").checked = false;
+    originalFilename = "";
+    overwriteWrap.hidden = true;
     updateImageControls();
     updatePreview();
   };
@@ -343,6 +350,36 @@
     exportStatus.textContent = "Markdown downloaded. Move it into content/publications/ and review it before committing.";
   };
 
+  const saveLocally = async () => {
+    if (!isLocalEditor) {
+      exportStatus.textContent = "Direct saving is available only in the local editor. Run python tools/site_editor.py and open http://127.0.0.1:8000/admin/publications/.";
+      return;
+    }
+    saveButton.disabled = true;
+    exportStatus.textContent = "Saving publication to content/publications/...";
+    try {
+      const filename = `${slugify(field("filename").value) || "publication"}.md`;
+      const response = await fetch("/api/publications/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename,
+          markdown: preview.value,
+          overwrite: field("overwrite").checked || filename === originalFilename,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "The local server rejected the publication.");
+      exportStatus.textContent = `${result.path} saved. Hugo rebuilt the site.`;
+      originalFilename = filename;
+      overwriteWrap.hidden = false;
+    } catch (error) {
+      exportStatus.textContent = `Could not save locally: ${error.message}`;
+    } finally {
+      saveButton.disabled = false;
+    }
+  };
+
   const parse = () => {
     entries = parseBibtex(input.value);
     if (!entries.length) {
@@ -372,6 +409,7 @@
   imageMode.addEventListener("change", updateImageControls);
   form.addEventListener("input", updatePreview);
   form.addEventListener("submit", (event) => { event.preventDefault(); download(); });
+  saveButton.addEventListener("click", saveLocally);
   root.querySelector("[data-copy]").addEventListener("click", async () => {
     await navigator.clipboard.writeText(preview.value);
     exportStatus.textContent = "Markdown copied to the clipboard.";

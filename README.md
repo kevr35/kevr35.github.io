@@ -81,6 +81,16 @@ hugo new climbing/my-route.md --kind climbing-route
 
 Edit the generated Markdown file, review it locally, and set `draft: false` when it is ready to publish.
 
+### Local editing mode
+
+For the fastest workflow, run one script that serves all three moderator tools with direct-save into the repository (no manual download/move step):
+
+```powershell
+python tools/site_editor.py
+```
+
+This rebuilds the site once, then serves `http://127.0.0.1:8000/admin/climbing/`, `/admin/publications/`, and `/admin/notebooks/`. Each page detects it is running locally and swaps its "Download Markdown" button for a "Save directly to content/..." button that writes the file and reruns `hugo --minify`. The same pages are also hosted at `kevin-reiss.com` for editing from any browser, where they fall back to downloading a file to move into the repository by hand.
+
 ### Publications
 
 The browser-based publication editor is available at [`/admin/publications/`](https://kevin-reiss.com/admin/publications/). Enter a DOI or paper URL to fetch metadata, or paste BibTeX/load a `.bib` file directly. Review the imported fields and choose whether to include an image. When enabled, the image options are a publisher favicon derived from the publisher URL or a local preview image path; uncheck the image checkbox to omit the image. Move the Markdown file into `content/publications/` and any local image into `static/previews/`, review them, and commit them manually. The editor cleans the stored BibTeX down to conventional citation fields.
@@ -98,10 +108,14 @@ Climbing pages send a `noimageindex` directive, and future route photos should b
 The hosted climbing editor is available at [`/admin/climbing/`](https://kevin-reiss.com/admin/climbing/) and downloads Markdown. It also accepts multiple route photos; local mode resizes them to web-sized JPEGs under `static/route-images/<route>/` and writes `thumbnail`/`photos` metadata. For the faster local workflow, run:
 
 ```powershell
-python tools/climbing_editor.py
+python tools/site_editor.py
 ```
 
 Open `http://127.0.0.1:8000/admin/climbing/`. Paste a Mountain Project route URL or search Mountain Project in a new tab, review and correct every field, optionally add a YouTube URL, and click **Save directly to content/climbing/**. The local tool writes the Markdown file into the repository and rebuilds Hugo. Mountain Project may block browser scraping, so every field remains editable.
+
+### Notebooks
+
+Notebooks are not hosted on this site; each one must first be published to the Wolfram Cloud (`CloudDeploy` in Mathematica, with public sharing enabled) so it has a shareable "Embed Code" URL. The browser-based notebook editor is available at [`/admin/notebooks/`](https://kevin-reiss.com/admin/notebooks/): paste that embed URL, it derives a default title and filename from the link, edit the description/tags/date, and either click **Save directly to content/notebooks/** (local editing mode) or download a Hugo Markdown file to move there by hand. The editor does not authenticate or publish anything itself.
 
 ## Publishing
 
@@ -206,7 +220,7 @@ To reuse this repository as a template for another Hugo + PaperMod + GitHub Page
 6. **Enable GitHub Pages via Actions**: in the repository's **Settings → Pages**, set **Source** to **GitHub Actions** (not "Deploy from a branch"). No `gh-pages` branch or Pages-specific secrets are required — the workflow's `GITHUB_TOKEN` permissions handle it.
 7. **Push to `master`** (or update the workflow's `branches:` filter to match your default branch, e.g. `main`). The first push triggers the workflow, which builds and publishes the site; watch progress under the **Actions** tab, and find the live URL under **Settings → Pages** or the `github-pages` environment.
 8. **Add content types as needed**: create `archetypes/*.md` templates and matching `layouts/` templates the same way this repo does for `publications` and `climbing` (see [archetypes/publication.md](archetypes/publication.md), [archetypes/climbing-route.md](archetypes/climbing-route.md), and their corresponding `layouts/publications/` and `layouts/climbing/` templates) if you want custom content types beyond ordinary posts.
-9. **Optional admin tools**: the `/admin/publications/` and `/admin/climbing/` pages in this repo are just static pages with client-side JavaScript ([assets/js/publication-editor.js](assets/js/publication-editor.js), [assets/js/climbing-editor.js](assets/js/climbing-editor.js)) rendered through dedicated layout types ([layouts/publication-editor/single.html](layouts/publication-editor/single.html), [layouts/climbing-editor/single.html](layouts/climbing-editor/single.html)). They run entirely in the visitor's browser, hold no credentials, and only download files for the site owner to manually commit — a pattern worth copying for any "generate front matter for me" tool on a statically hosted site.
+9. **Optional admin tools**: the `/admin/publications/`, `/admin/climbing/`, and `/admin/notebooks/` pages in this repo are static pages with client-side JavaScript ([assets/js/publication-editor.js](assets/js/publication-editor.js), [assets/js/climbing-editor.js](assets/js/climbing-editor.js), [assets/js/notebook-editor.js](assets/js/notebook-editor.js)) rendered through dedicated layout types ([layouts/publication-editor/single.html](layouts/publication-editor/single.html), [layouts/climbing-editor/single.html](layouts/climbing-editor/single.html), [layouts/notebook-editor/single.html](layouts/notebook-editor/single.html)). Hosted, they run entirely in the visitor's browser, hold no credentials, and only download files for the site owner to manually commit. Run locally via [tools/site_editor.py](tools/site_editor.py) — a small `http.server` subclass — the same pages instead save Markdown directly into `content/` and rerun `hugo --minify`, detected client-side via `window.location.hostname` — a pattern worth copying for any "generate front matter for me" tool on a statically hosted site.
 
 ## Documentation
 

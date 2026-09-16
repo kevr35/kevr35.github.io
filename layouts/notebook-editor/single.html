@@ -1,0 +1,51 @@
+{{- define "main" -}}
+<div class="notebook-editor" data-notebook-editor>
+  <header class="notebook-editor__header">
+    <p class="notebook-editor__eyebrow">Moderator tool</p>
+    <h1>{{ .Title }}</h1>
+    <p>Paste a Wolfram Cloud "Embed Code" link for a published notebook, review the fields below, then download a Hugo notebook file. Nothing is uploaded or published by this page &mdash; the notebook itself must already be published to the Wolfram Cloud.</p>
+  </header>
+
+  <section class="notebook-editor__panel">
+    <label for="notebook-source">Wolfram Cloud embed URL <small>From the notebook's Wolfram Cloud "Embed Code" dialog, e.g. https://www.wolframcloud.com/obj/user/Published/Name.nb</small></label>
+    <input id="notebook-source" type="url" data-notebook-source placeholder="https://www.wolframcloud.com/obj/user/Published/Name.nb">
+    <div class="notebook-editor__actions">
+      <button type="button" class="notebook-editor__button notebook-editor__button--primary" data-load-source>Load link</button>
+    </div>
+    <p class="notebook-editor__status" data-load-status role="status"></p>
+  </section>
+
+  <form class="notebook-editor__form" data-notebook-form hidden>
+    <div class="notebook-editor__panel">
+      <div class="notebook-editor__form-grid">
+        <label>Title<input name="title" required></label>
+        <label>Date <small>YYYY-MM-DD</small><input name="date"></label>
+        <label>Tags <small>Separate tags with commas</small><input name="tags"></label>
+        <label>Embed URL<input name="embed_url" type="url" required></label>
+      </div>
+      <label>Description<textarea name="description" rows="3"></textarea></label>
+      <label>Filename <small>Without `.md`; spaces become hyphens</small><input name="filename" required></label>
+      <label class="notebook-editor__checkbox"><input name="draft" type="checkbox"> Keep as draft</label>
+      <label class="notebook-editor__checkbox" data-overwrite-wrap hidden><input name="overwrite" type="checkbox"> Overwrite the existing file with this filename</label>
+      <section class="notebook-editor__next-steps">
+        <h2>Next steps</h2>
+        <ol>
+          <li>Confirm the notebook is published to the Wolfram Cloud with public sharing enabled, so the embed URL loads for visitors.</li>
+          <li>Review the fields above and set <strong>Keep as draft</strong> if you are not ready to publish.</li>
+          <li>If running <code>python tools/site_editor.py</code> locally, click <strong>Save to content/notebooks/</strong> to write and rebuild directly. Otherwise, click <strong>Download Hugo Markdown</strong> and put the file in <code>content/notebooks/</code> yourself.</li>
+          <li>Run <code>hugo --minify</code> (done automatically by the local save), review the result, then commit and push the Markdown file.</li>
+        </ol>
+      </section>
+      <div class="notebook-editor__actions">
+        <button type="button" class="notebook-editor__button notebook-editor__button--primary" data-save-locally>Save to content/notebooks/</button>
+        <button type="submit" class="notebook-editor__button">Download Hugo Markdown</button>
+        <button type="button" class="notebook-editor__button" data-copy>Copy Markdown</button>
+      </div>
+      <p class="notebook-editor__status" data-export-status role="status"></p>
+    </div>
+    <label class="notebook-editor__preview-label">Generated Markdown<textarea data-markdown-preview rows="14" readonly></textarea></label>
+  </form>
+</div>
+{{- $script := resources.Get "js/notebook-editor.js" | minify | fingerprint -}}
+<script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
