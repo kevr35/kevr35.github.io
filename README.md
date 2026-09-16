@@ -22,7 +22,7 @@ Hugo is a static site generator: Markdown files in [content/](content/) are comb
 
 - **Content** lives as Markdown with YAML front matter under [content/](content/) (posts, publications, climbing routes).
 - **Presentation** comes from the PaperMod theme, overridden/extended by project-specific templates in [layouts/](layouts/) and styles in [assets/css/extended/](assets/css/extended/).
-- **Small interactive tools** (the publication and climbing entry editors) are plain client-side JavaScript pages under `/admin/`, built from [assets/js/publication-editor.js](assets/js/publication-editor.js) and [assets/js/climbing-editor.js](assets/js/climbing-editor.js), rendered by [layouts/publication-editor/single.html](layouts/publication-editor/single.html) and [layouts/climbing-editor/single.html](layouts/climbing-editor/single.html).
+- **Small interactive tools** are plain client-side JavaScript pages under `/admin/`, including the route importer, climbing hierarchy editor, publication editor, and notebook editor.
 - **Build & deploy** happens entirely in [.github/workflows/hugo.yml](.github/workflows/hugo.yml): every push to `master` triggers a GitHub Actions run that installs Hugo, builds the site, and publishes it to GitHub Pages. There is no separate "hugo server" running in production — GitHub Pages just serves the static files that Hugo generated during the Actions run.
 
 ## Repository Layout
@@ -35,9 +35,10 @@ Hugo is a static site generator: Markdown files in [content/](content/) are comb
 | [layouts/](layouts/) | Project-specific Hugo templates that extend/override the theme (climbing list/single pages, publication list page, admin editors, partials). |
 | [assets/](assets/) | CSS and JavaScript processed through Hugo Pipes (bundling/fingerprinting), including the editor JS. |
 | [static/](static/) | Files copied verbatim into the deployed site (favicons, resume PDF, route images, notebooks, previews). |
-| [data/climbing/locations.yaml](data/climbing/locations.yaml) | Shared crag/region coordinates referenced by climbing route front matter. |
+| [data/climbing/locations.yaml](data/climbing/locations.yaml) | Shared state/location/crag hierarchy and map coordinates inherited by climbing routes. |
 | [themes/PaperMod/](themes/PaperMod/) | Git submodule for the PaperMod theme; not edited directly for site changes. |
-| [tools/climbing_editor.py](tools/climbing_editor.py) | Local Python helper server that writes new climbing entries (and resized photos) directly into the repo. |
+| [tools/site_editor.py](tools/site_editor.py) | Unified local editor server for climbing, publications, and notebooks. |
+| [tools/climbing_tools.py](tools/climbing_tools.py) | Climbing imports, hierarchy, coordinate, and route helpers used by the unified editor. |
 | [.github/workflows/hugo.yml](.github/workflows/hugo.yml) | GitHub Actions workflow that builds the site with Hugo and deploys it to GitHub Pages. |
 | `public/` | Generated output of `hugo`/`hugo server`. Git-ignored; never commit it. |
 
@@ -48,7 +49,7 @@ Requirements:
 - [Hugo Extended](https://gohugo.io/installation/) (the workflow currently pins `0.146.0`; use a matching or newer extended version locally).
 - Git, with submodule support.
 - Optional: [Dart Sass](https://sass-lang.com/dart-sass/) if you add SCSS that needs external compilation (PaperMod itself does not require it).
-- Optional: Python 3 with [Pillow](https://pypi.org/project/Pillow/) for the local climbing editor (`pip install Pillow`).
+- Optional: Python 3 with [Pillow](https://pypi.org/project/Pillow/) for local route-photo processing (`pip install Pillow`).
 
 Clone and run:
 
@@ -83,13 +84,13 @@ Edit the generated Markdown file, review it locally, and set `draft: false` when
 
 ### Local editing mode
 
-For the fastest workflow, run one script that serves all three moderator tools with direct-save into the repository (no manual download/move step):
+For the fastest workflow, run the unified local editor with direct-save into the repository (no manual download/move step):
 
 ```powershell
 python tools/site_editor.py
 ```
 
-This rebuilds the site once, then serves `http://127.0.0.1:8000/admin/climbing/`, `/admin/publications/`, and `/admin/notebooks/`. Each page detects it is running locally and swaps its "Download Markdown" button for a "Save directly to content/..." button that writes the file and reruns `hugo --minify`. The same pages are also hosted at `kevin-reiss.com` for editing from any browser, where they fall back to downloading a file to move into the repository by hand.
+This rebuilds the site once, then serves `http://127.0.0.1:8000/admin/climbing/`, `/admin/climbing-hierarchy/`, `/admin/publications/`, and `/admin/notebooks/`. The route importer creates route Markdown; the hierarchy editor manages approved state/location/crag records and coordinates. Local mode enables direct saves; hosted pages remain download-only.
 
 ### Publications
 
@@ -101,11 +102,11 @@ The editor does not authenticate, write to GitHub, or publish changes. It contai
 
 ### Climbing
 
-Climbing entries store only route-specific hierarchy fields: `crag` and optional `wall`. State and location are inherited from the crag's parent records in `data/climbing/locations.yaml`. The map shows a location only when it contains multiple crags; a location with one crag shows that crag directly. Run `python tools/clean_locations.py` to validate the relationship before publishing.
+Climbing entries store only route-specific hierarchy fields: `crag` and optional `wall`. State and location are inherited from the crag's parent records in `data/climbing/locations.yaml`. Use `/admin/climbing-hierarchy/` to name, move, delete empty nodes, or correct coordinates. The map shows a location only when it contains multiple crags; a location with one crag shows that crag directly. Run `python tools/clean_locations.py` to perform a read-only hierarchy validation before publishing.
 
 Climbing pages send a `noimageindex` directive, and future route photos should be stored under `/route-images/`, which is disallowed in `robots.txt`. These are crawler instructions, not access control: public images can still be viewed, copied, or indexed by systems that ignore them.
 
-The hosted climbing editor is available at [`/admin/climbing/`](https://kevin-reiss.com/admin/climbing/) and downloads Markdown. It also accepts multiple route photos; local mode resizes them to web-sized JPEGs under `static/route-images/<route>/` and writes `thumbnail`/`photos` metadata. For the faster local workflow, run:
+The admin landing page is [`/admin/`](https://kevin-reiss.com/admin/), with the location hierarchy first at [`/admin/climbing-hierarchy/`](https://kevin-reiss.com/admin/climbing-hierarchy/) and the route importer at [`/admin/climbing/`](https://kevin-reiss.com/admin/climbing/). Use the hierarchy page to approve new state/location/crag names, parents, and coordinates before importing routes. The route editor downloads Markdown and accepts multiple route photos; local mode resizes them to web-sized JPEGs under `static/route-images/<route>/` and writes `thumbnail`/`photos` metadata. For the faster local workflow, run:
 
 ```powershell
 python tools/site_editor.py
@@ -220,7 +221,7 @@ To reuse this repository as a template for another Hugo + PaperMod + GitHub Page
 6. **Enable GitHub Pages via Actions**: in the repository's **Settings → Pages**, set **Source** to **GitHub Actions** (not "Deploy from a branch"). No `gh-pages` branch or Pages-specific secrets are required — the workflow's `GITHUB_TOKEN` permissions handle it.
 7. **Push to `master`** (or update the workflow's `branches:` filter to match your default branch, e.g. `main`). The first push triggers the workflow, which builds and publishes the site; watch progress under the **Actions** tab, and find the live URL under **Settings → Pages** or the `github-pages` environment.
 8. **Add content types as needed**: create `archetypes/*.md` templates and matching `layouts/` templates the same way this repo does for `publications` and `climbing` (see [archetypes/publication.md](archetypes/publication.md), [archetypes/climbing-route.md](archetypes/climbing-route.md), and their corresponding `layouts/publications/` and `layouts/climbing/` templates) if you want custom content types beyond ordinary posts.
-9. **Optional admin tools**: the `/admin/publications/`, `/admin/climbing/`, and `/admin/notebooks/` pages in this repo are static pages with client-side JavaScript ([assets/js/publication-editor.js](assets/js/publication-editor.js), [assets/js/climbing-editor.js](assets/js/climbing-editor.js), [assets/js/notebook-editor.js](assets/js/notebook-editor.js)) rendered through dedicated layout types ([layouts/publication-editor/single.html](layouts/publication-editor/single.html), [layouts/climbing-editor/single.html](layouts/climbing-editor/single.html), [layouts/notebook-editor/single.html](layouts/notebook-editor/single.html)). Hosted, they run entirely in the visitor's browser, hold no credentials, and only download files for the site owner to manually commit. Run locally via [tools/site_editor.py](tools/site_editor.py) — a small `http.server` subclass — the same pages instead save Markdown directly into `content/` and rerun `hugo --minify`, detected client-side via `window.location.hostname` — a pattern worth copying for any "generate front matter for me" tool on a statically hosted site.
+9. **Optional admin tools**: the `/admin/` pages are static pages with client-side JavaScript for route importing, hierarchy management, publications, and notebooks. Hosted, they hold no credentials and only download files for the site owner to manually commit. Run locally via [tools/site_editor.py](tools/site_editor.py), which serves the unified editor and saves Markdown directly into `content/` before rerunning `hugo --minify`.
 
 ## Documentation
 

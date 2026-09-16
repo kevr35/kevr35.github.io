@@ -11,7 +11,8 @@
       {{ $location := index (where site.Data.climbing.locations "name" $crag.parent) 0 }}
       {{ with $location.parent }}<span><b>State</b>{{ . }}</span>{{ end }}
       {{ with $crag.parent }}<span><b>Location</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" . | safeURL }}">{{ . }}</a></span>{{ end }}
-      {{ with $routePage.Params.crag }}<span><b>Crag</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" . | safeURL }}">{{ . }}</a>{{ with $routePage.Params.wall }} / <a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" $routePage.Params.crag "wall" . | safeURL }}">{{ . }}</a>{{ end }}</span>{{ end }}
+      {{ with $routePage.Params.crag }}<span><b>Crag</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" . | safeURL }}">{{ . }}</a></span>{{ end }}
+      {{ with $routePage.Params.wall }}<span><b>Wall</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" $routePage.Params.crag "wall" . | safeURL }}">{{ . }}</a></span>{{ end }}
       {{ with .Params.discipline }}<span><b>Discipline</b>{{ . }}</span>{{ end }}
       {{ with .Params.setting }}<span><b>Setting</b>{{ . }}</span>{{ end }}
       {{ with .Params.climb_date }}<span><b>Climbed</b>{{ time.Format "January 2, 2006" . }}</span>{{ end }}

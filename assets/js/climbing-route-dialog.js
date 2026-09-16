@@ -35,6 +35,7 @@
   let filename = "";
   let originalMarkdown = "";
   let savedFormState = "";
+  let originalFieldValues = {};
 
   const frontmatterMatch = (markdown) => markdown.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)([\s\S]*)$/);
   const readField = (frontmatter, name) => {
@@ -63,6 +64,12 @@
     const changed = state() !== savedFormState;
     save.disabled = !changed;
     status.textContent = changed ? "Unsaved changes." : "";
+    form.querySelectorAll("input, select, textarea").forEach((control) => {
+      if (control.disabled) return;
+      const value = control.type === "checkbox" ? String(control.checked) : control.value;
+      control.classList.toggle("climbing-route-dialog__field--changed", value !== originalFieldValues[control.name]);
+      control.closest("label")?.classList.toggle("climbing-route-dialog__label--changed", value !== originalFieldValues[control.name]);
+    });
   };
   const buildMarkdown = () => {
     const match = frontmatterMatch(originalMarkdown);
@@ -125,8 +132,10 @@
       form.elements.body.value = match[4].trim();
       form.elements.draft.checked = readField(match[2], "draft") === "true";
       savedFormState = state();
+      originalFieldValues = Object.fromEntries([...form.elements].filter((control) => control.name).map((control) => [control.name, control.type === "checkbox" ? String(control.checked) : control.value]));
+      refreshSaveState();
       status.textContent = "";
-      form.elements.title.focus();
+      form.elements.title.focus({ preventScroll: true });
     } catch (error) {
       status.textContent = `Could not load route: ${error.message}`;
     }

@@ -116,38 +116,38 @@
   level: "location"
 - name: "Cotton Hill"
   parent: "New River Gorge"
-  latitude: 38.1533
-  longitude: -80.9278
+  latitude: 38.1138
+  longitude: -81.13935
   level: "crag"
 - name: "Endless Wall"
   parent: "New River Gorge"
-  latitude: 38.1444
-  longitude: -80.9106
+  latitude: 38.05444
+  longitude: -81.05708
   level: "crag"
-- name: "Lower New River Gorge Bouldering"
+- name: "Hawk's Nest"
   parent: "New River Gorge"
-  latitude: 38.2025
-  longitude: -80.8844
+  latitude: 38.11781
+  longitude: -81.13181
   level: "crag"
 - name: "Interp Boulders"
   parent: "New River Gorge"
-  latitude: 38.3189
-  longitude: -80.7733
+  latitude: 38.07807
+  longitude: -81.07878
   level: "crag"
 - name: "Meadow Top Boulders"
   parent: "New River Gorge"
-  latitude: 38.3328
-  longitude: -80.8217
+  latitude: 38.15359
+  longitude: -80.93483
   level: "crag"
 - name: "Summersville (Gauley River) Area"
   parent: "New River Gorge"
-  latitude: 38.5706
-  longitude: -80.8581
+  latitude: 38.2338
+  longitude: -80.8552
   level: "crag"
 - name: "Upper Meadow"
   parent: "New River Gorge"
-  latitude: 38.3417
-  longitude: -80.8403
+  latitude: 38.14295
+  longitude: -80.91755
   level: "crag"
 - name: "Connecticut"
   latitude: 41.42947
@@ -340,58 +340,58 @@
   level: "crag"
 - name: "Armed and Dangerous (Main Cliff Left)"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80202
+  longitude: -71.83678
   level: "crag"
 - name: "Bonsai"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80288
+  longitude: -71.83926
   level: "crag"
 - name: "Main Cliff Right"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80269
+  longitude: -71.83553
   level: "crag"
 - name: "Below the New Wave"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.8021
+  longitude: -71.8367
   level: "crag"
 - name: "Kennel Wall"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80329
+  longitude: -71.83444
   level: "crag"
 - name: "The Hinterlands"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80505
+  longitude: -71.84309
   level: "crag"
 - name: "The Meadows"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80228
+  longitude: -71.83202
   level: "crag"
 - name: "Waimea"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80386
+  longitude: -71.84091
   level: "crag"
 - name: "Main Parking Lot/Meadows Bouldering"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80241
+  longitude: -71.83902
   level: "crag"
 - name: "The Main Cliff"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80249
+  longitude: -71.83593
   level: "crag"
 - name: "Orange Crush"
   parent: "Rumney"
-  latitude: 43.80273
-  longitude: -71.83029
+  latitude: 43.80293
+  longitude: -71.83513
   level: "crag"
 - name: "Cliff Boulders"
   parent: "Pawtuckaway"

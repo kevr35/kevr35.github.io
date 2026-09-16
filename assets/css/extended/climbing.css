@@ -387,6 +387,19 @@
   font: inherit;
 }
 
+.climbing-route-dialog__label--changed {
+  color: #a52a2a !important;
+}
+
+.climbing-route-dialog input.climbing-route-dialog__field--changed,
+.climbing-route-dialog select.climbing-route-dialog__field--changed,
+.climbing-route-dialog textarea.climbing-route-dialog__field--changed {
+  color: #8f2020;
+  background: #fff1f1;
+  border-color: #c74343;
+  box-shadow: 0 0 0 2px rgb(199 67 67 / 0.14);
+}
+
 .climbing-route-dialog textarea {
   resize: vertical;
 }

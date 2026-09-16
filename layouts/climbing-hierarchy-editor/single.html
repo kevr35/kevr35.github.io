@@ -1,0 +1,46 @@
+{{- define "main" -}}
+<div class="climbing-editor" data-hierarchy-editor>
+  <header class="climbing-editor__header">
+    <p class="climbing-editor__eyebrow">Admin tools</p>
+    <h1>{{ .Title }}</h1>
+    <p>Edit the shared state, location, and crag registry. Route Markdown stores only crag and wall; these records supply inherited parents and map coordinates.</p>
+    <p><a class="climbing-editor__button" href="/admin/climbing/">Route importer</a> <a class="climbing-editor__button" href="/climbing/?edit=1">Interactive route editor</a></p>
+  </header>
+  <section class="climbing-editor__panel">
+    <h2>Add approved hierarchy node</h2>
+    <p>Name new states, locations, or crags here before importing routes that use them. Existing records are never overwritten.</p>
+    <div class="climbing-editor__grid">
+      <label>Level<select data-new-level><option value="state">State / country</option><option value="location">Location</option><option value="crag">Crag</option></select></label>
+      <label>Name<input data-new-name></label>
+      <label>Parent<select data-new-parent></select></label>
+      <label>Latitude<input data-new-latitude inputmode="decimal"></label>
+      <label>Longitude<input data-new-longitude inputmode="decimal"></label>
+    </div>
+    <div class="climbing-editor__actions"><button type="button" class="climbing-editor__button climbing-editor__button--local" data-new-save>Add node</button></div>
+    <p class="climbing-editor__status" data-new-status role="status"></p>
+  </section>
+  <section class="climbing-editor__panel climbing-editor__lookup">
+    <h2>Location hierarchy</h2>
+    <p>Choose a node to rename it, change its parent, or correct its coordinates. Existing routes and child nodes protect records from unsafe deletion.</p>
+    <div class="climbing-hierarchy-graph" data-hierarchy-graph></div>
+    <div class="climbing-editor__grid" data-hierarchy-fields hidden>
+      <label>Selected node<input data-hierarchy-old-name readonly></label>
+      <label>Name<input data-hierarchy-name></label>
+      <label>Parent<select data-hierarchy-parent></select></label>
+      <label>Latitude<input data-hierarchy-latitude inputmode="decimal"></label>
+      <label>Longitude<input data-hierarchy-longitude inputmode="decimal"></label>
+      <p class="climbing-editor__status" data-hierarchy-impact></p>
+    </div>
+    <div class="climbing-editor__actions" data-hierarchy-actions hidden>
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-hierarchy-save>Save changes</button>
+      <button type="button" class="climbing-editor__button" data-refresh-coordinates hidden>Refresh child crag coordinates</button>
+      <button type="button" class="climbing-editor__button climbing-editor__button--danger" data-hierarchy-delete>Delete empty node</button>
+    </div>
+    <p class="climbing-editor__status" data-hierarchy-status role="status">Available only in the local editor.</p>
+  </section>
+</div>
+{{- $dialogScript := resources.Get "js/climbing-route-dialog.js" | minify | fingerprint -}}
+<script defer src="{{ $dialogScript.RelPermalink }}"></script>
+{{- $script := resources.Get "js/climbing-hierarchy-editor.js" | minify | fingerprint -}}
+<script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}

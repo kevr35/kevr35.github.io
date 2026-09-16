@@ -7,26 +7,20 @@ Then open http://127.0.0.1:8000/admin/climbing/, /admin/publications/, or
 """
 
 import json
-import re
 import sys
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 
-from climbing_editor import Handler as ClimbingHandler, ROOT, PORT, build_site
+from climbing_tools import Handler as ClimbingHandler, ROOT, PORT, build_site
+from notebook_tools import validate_markdown_payload as validate_notebook_payload
+from publication_tools import validate_markdown_payload as validate_publication_payload
 
 PUBLICATIONS = ROOT / "content" / "publications"
 NOTEBOOKS = ROOT / "content" / "notebooks"
-FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*\.md$")
-
-
-def normalize_filename(value):
-    filename = str(value or "").strip()
-    if not filename.lower().endswith(".md"):
-        filename += ".md"
-    return filename
 
 
 class Handler(ClimbingHandler):
-    """Adds direct-save endpoints for publications and notebooks on top of the climbing editor's routes."""
+    """Unified local server for climbing, publications, and notebooks."""
 
     def do_POST(self):
         origin = self.headers.get("Origin")
@@ -34,23 +28,17 @@ class Handler(ClimbingHandler):
             self.send_json(403, {"error": "Cross-origin editor requests are not allowed."})
             return
         if self.path == "/api/publications/entries":
-            self.save_markdown_entry(PUBLICATIONS, "publications")
+            self.save_markdown_entry(PUBLICATIONS, "publications", validate_publication_payload)
         elif self.path == "/api/notebooks/entries":
-            self.save_markdown_entry(NOTEBOOKS, "notebooks")
+            self.save_markdown_entry(NOTEBOOKS, "notebooks", validate_notebook_payload)
         else:
             super().do_POST()
 
-    def save_markdown_entry(self, directory, label):
+    def save_markdown_entry(self, directory: Path, label, validate_payload):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length))
-            filename = normalize_filename(payload.get("filename"))
-            markdown = payload.get("markdown", "")
-            overwrite = bool(payload.get("overwrite"))
-            if not FILENAME.fullmatch(filename):
-                raise ValueError("Filename must contain only letters, numbers, hyphens, or underscores and end in .md.")
-            if not isinstance(markdown, str) or not markdown.startswith("---"):
-                raise ValueError("Generated Markdown is invalid.")
+            filename, markdown, overwrite = validate_payload(payload)
             directory.mkdir(parents=True, exist_ok=True)
             target = directory / filename
             if target.exists() and not overwrite:

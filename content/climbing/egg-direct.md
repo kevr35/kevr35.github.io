@@ -2,7 +2,7 @@
 title: "Egg Direct"
 date: 2026-09-15T19:19:00.000Z
 climb_date: "2024-07-06"
-crag: "Lower New River Gorge Bouldering"
+crag: "Hawk's Nest"
 wall: ""
 discipline: "Boulder"
 setting: "Outdoor"

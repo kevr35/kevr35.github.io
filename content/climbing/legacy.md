@@ -3,7 +3,7 @@ title: "Legacy"
 date: 2026-09-15T19:17:13.000Z
 climb_date: "2025-12-01"
 crag: "Endless Wall"
-wall: ""
+wall: "Snake Buttress"
 discipline: "Sport"
 setting: "Outdoor"
 grade: "5.11a"
@@ -17,4 +17,5 @@ tags:
   - "Climbing"
 draft: false
 ---
+
 

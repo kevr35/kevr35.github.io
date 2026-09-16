@@ -1,4 +1,4 @@
-"""Run the local climbing editor and save routes directly into the Hugo repo."""
+"""Climbing-domain helpers and HTTP handlers used by site_editor.py."""
 
 import json
 import base64
@@ -6,12 +6,11 @@ import csv
 import io
 import re
 import subprocess
-import sys
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 from PIL import Image, ImageOps
@@ -294,7 +293,7 @@ def read_frontmatter_value(text, name):
 
 
 def clean_route_frontmatter_names(path):
-    """Strip stray '*' prefixes from a saved route's state/location/crag/wall fields, rewriting the file if needed."""
+    """Return route text with stray '*' prefixes cleaned without writing the route."""
     text = path.read_text(encoding="utf-8")
     updated = text
     for field in ("state", "location", "crag", "wall"):
@@ -304,8 +303,6 @@ def clean_route_frontmatter_names(path):
         cleaned = clean_location_name(match.group(1))
         if cleaned != match.group(1):
             updated = updated[: match.start(1)] + cleaned + updated[match.end(1) :]
-    if updated != text:
-        path.write_text(updated, encoding="utf-8", newline="\n")
     return updated
 
 
@@ -326,6 +323,9 @@ def rebuild_location_registry():
     added, failed = [], []
     for crag in crags.values():
         if crag["name"].casefold() in known_names:
+            continue
+        if not crag["location"] or not crag["state"]:
+            failed.append(f'{crag["name"]} (parent location/state must be verified in the editor)')
             continue
         coordinates = fetch_route_coordinates(crag["url"])
         if not coordinates:
@@ -472,6 +472,8 @@ def update_hierarchy_node(payload):
     old_name = clean_location_name(payload.get("old_name"))
     new_name = clean_location_name(payload.get("name"))
     parent = clean_location_name(payload.get("parent", ""))
+    latitude = str(payload.get("latitude", "")).strip()
+    longitude = str(payload.get("longitude", "")).strip()
     if not old_name or not new_name:
         raise ValueError("Choose a hierarchy node and give it a name.")
 
@@ -495,6 +497,18 @@ def update_hierarchy_node(payload):
         raise ValueError("Every location must have a state as its parent.")
     if level == "crag" and (not parent_node or parent_node.get("level", "crag") != "location"):
         raise ValueError("Every crag must have a location as its parent.")
+    if latitude or longitude:
+        if not latitude or not longitude:
+            raise ValueError("Latitude and longitude must be provided together.")
+        try:
+            latitude_value = float(latitude)
+            longitude_value = float(longitude)
+        except ValueError as error:
+            raise ValueError("Latitude and longitude must be numeric.") from error
+        if not -90 <= latitude_value <= 90 or not -180 <= longitude_value <= 180:
+            raise ValueError("Latitude must be between -90 and 90; longitude must be between -180 and 180.")
+        node["latitude"] = latitude
+        node["longitude"] = longitude
 
     # Walk upward from the proposed parent to prevent a hierarchy cycle.
     ancestor = parent_node
@@ -565,6 +579,69 @@ def delete_hierarchy_node(payload):
     return {"node": name, "level": node.get("level", "crag")}
 
 
+def refresh_location_coordinates(payload):
+    location_name = clean_location_name(payload.get("name"))
+    if not location_name:
+        raise ValueError("Choose a location to refresh.")
+    blocks = read_locations()
+    location = next((block for block in blocks if block["name"].casefold() == location_name.casefold()), None)
+    if not location or location.get("level") != "location":
+        raise ValueError("Coordinate refresh is available for locations only.")
+    crags = [block for block in blocks if block.get("parent", "").casefold() == location["name"].casefold() and block.get("level") == "crag"]
+    route_urls = {}
+    for path in CONTENT.glob("*.md"):
+        text = path.read_text(encoding="utf-8")
+        crag = read_frontmatter_value(text, "crag").casefold()
+        url = normalize_url(read_frontmatter_value(text, "mountain_project_url"))
+        if crag and url and crag not in route_urls:
+            route_urls[crag] = url
+    updated, failed = [], []
+    for crag in crags:
+        url = route_urls.get(crag["name"].casefold())
+        coordinates = fetch_route_coordinates(url) if url else None
+        if not coordinates:
+            failed.append(crag["name"])
+            continue
+        crag["latitude"] = coordinates["latitude"]
+        crag["longitude"] = coordinates["longitude"]
+        updated.append(crag["name"])
+        time.sleep(0.4)
+    if updated:
+        write_locations(blocks)
+    return {"location": location["name"], "updated": updated, "failed": failed}
+
+
+def create_hierarchy_node(payload):
+    name = clean_location_name(payload.get("name"))
+    level = clean_location_name(payload.get("level"))
+    parent = clean_location_name(payload.get("parent", ""))
+    latitude = str(payload.get("latitude", "")).strip()
+    longitude = str(payload.get("longitude", "")).strip()
+    if level not in {"state", "location", "crag"} or not name:
+        raise ValueError("Choose a valid hierarchy level and name.")
+    if level != "state" and not parent:
+        raise ValueError("A location or crag must have a parent.")
+    if level == "state" and parent:
+        raise ValueError("A state cannot have a parent.")
+    try:
+        latitude_value = float(latitude)
+        longitude_value = float(longitude)
+    except ValueError as error:
+        raise ValueError("Latitude and longitude are required and must be numeric.") from error
+    if not -90 <= latitude_value <= 90 or not -180 <= longitude_value <= 180:
+        raise ValueError("Latitude must be between -90 and 90; longitude must be between -180 and 180.")
+    blocks = read_locations()
+    if any(block["name"].casefold() == name.casefold() for block in blocks):
+        raise ValueError(f'A hierarchy node named "{name}" already exists.')
+    parent_node = next((block for block in blocks if block["name"].casefold() == parent.casefold()), None) if parent else None
+    expected_parent = {"location": "state", "crag": "location"}.get(level)
+    if expected_parent and (not parent_node or parent_node.get("level") != expected_parent):
+        raise ValueError(f"A {level} must have a {expected_parent} parent.")
+    blocks.append({"name": name, "parent": parent, "latitude": latitude, "longitude": longitude, "level": level})
+    write_locations(blocks)
+    return {"node": name, "level": level}
+
+
 def build_route_markdown(fields):
     def q(value):
         return json.dumps(str(value or ""))
@@ -628,6 +705,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.handle_hierarchy_node()
         elif self.path == "/api/climbing/delete-hierarchy-node":
             self.handle_delete_hierarchy_node()
+        elif self.path == "/api/climbing/create-hierarchy-node":
+            self.handle_create_hierarchy_node()
+        elif self.path == "/api/climbing/refresh-location-coordinates":
+            self.handle_refresh_location_coordinates()
         else:
             self.send_json(404, {"error": "Not found"})
 
@@ -667,9 +748,17 @@ class Handler(SimpleHTTPRequestHandler):
                 crag_name = str(payload.get("crag_name", "")).strip()
                 if not state_name or not location_name or not parent or not crag_name or not coordinates:
                     raise ValueError("Verify the imported state, location, crag, and coordinates before adding them to the registry.")
-                ensure_state(state_name, coordinates)
-                ensure_location(location_name, coordinates, state_name)
-                add_registry_entry(crag_name, parent, coordinates)
+                registry = read_locations()
+                state = next((entry for entry in registry if entry["name"].casefold() == state_name.casefold()), None)
+                location = next((entry for entry in registry if entry["name"].casefold() == location_name.casefold()), None)
+                if not state or state.get("level") != "state" or not location or location.get("level") != "location" or location.get("parent", "").casefold() != state["name"].casefold():
+                    raise ValueError("Create and verify the state and parent location in the hierarchy editor before saving this route.")
+                existing_crag = next((entry for entry in registry if entry["name"].casefold() == crag_name.casefold()), None)
+                if existing_crag:
+                    if existing_crag.get("level") != "crag" or existing_crag.get("parent", "").casefold() != parent.casefold():
+                        raise ValueError("The approved crag has a different parent. Check the hierarchy editor before saving.")
+                elif not add_registry_entry(crag_name, parent, coordinates):
+                    raise ValueError("The crag could not be added. Verify its name and parent in the hierarchy editor first.")
             save_route_photos(Path(filename).stem, payload.get("photos", []))
             target.write_text(markdown, encoding="utf-8", newline="\n")
             if original_filename:
@@ -719,6 +808,28 @@ class Handler(SimpleHTTPRequestHandler):
         except RuntimeError as error:
             self.send_json(500, {"error": str(error)})
 
+    def handle_create_hierarchy_node(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            result = create_hierarchy_node(json.loads(self.rfile.read(length)))
+            build_site()
+            self.send_json(200, result)
+        except (ValueError, json.JSONDecodeError) as error:
+            self.send_json(400, {"error": str(error)})
+        except RuntimeError as error:
+            self.send_json(500, {"error": str(error)})
+
+    def handle_refresh_location_coordinates(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            result = refresh_location_coordinates(json.loads(self.rfile.read(length)))
+            build_site()
+            self.send_json(200, result)
+        except (ValueError, json.JSONDecodeError) as error:
+            self.send_json(400, {"error": str(error)})
+        except RuntimeError as error:
+            self.send_json(500, {"error": str(error)})
+
     def handle_import_ticks(self):
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -756,6 +867,14 @@ class Handler(SimpleHTTPRequestHandler):
                 info["location"] = hierarchy["location"]
                 info["crag"] = hierarchy["crag"]
                 info["state"] = info.get("state") or state_for_location(info["location"], locations)
+                if not any(
+                    entry.get("level") == "crag"
+                    and entry["name"].casefold() == info["crag"].casefold()
+                    and entry.get("parent", "").casefold() == info["location"].casefold()
+                    for entry in locations
+                ):
+                    errors.append(f'{info["title"]}: create and verify "{info["location"]} / {info["crag"]}" in the hierarchy editor first')
+                    continue
                 if not info["title"] or not info["mountain_project_url"]:
                     continue
                 try:
@@ -813,7 +932,13 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/api/climbing/locations":
-            self.send_json(200, read_locations())
+            locations = read_locations()
+            for location in locations:
+                location["route_count"] = sum(
+                    read_frontmatter_value(path.read_text(encoding="utf-8"), "crag").casefold() == location["name"].casefold()
+                    for path in CONTENT.glob("*.md")
+                )
+            self.send_json(200, locations)
             return
         if self.path.startswith("/api/climbing/routes/") and self.path.endswith("/markdown"):
             filename = normalize_filename(unquote(self.path[len("/api/climbing/routes/"):-len("/markdown")].rstrip("/")))
@@ -844,22 +969,3 @@ class Handler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def main():
-    try:
-        build_site()
-    except RuntimeError as error:
-        print(f"Initial Hugo build failed: {error}", file=sys.stderr)
-        raise SystemExit(1)
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"Climbing editor: http://127.0.0.1:{PORT}/admin/climbing/")
-    print("Press Ctrl+C to stop.")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nStopping climbing editor.")
-    finally:
-        server.server_close()
-
-
-if __name__ == "__main__":
-    main()

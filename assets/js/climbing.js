@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const scopedPoints = scopedMapPoints();
       const zoomedIn = map.getZoom() >= 9;
       const hasScope = scopedPoints !== points;
-      const visiblePoints = hasScope ? scopedPoints : scopedPoints.filter((point) => zoomedIn ? point.level !== "state" : overviewPoints().includes(point));
+      const visiblePoints = hasScope ? scopedPoints : scopedPoints.filter((point) => zoomedIn ? point.level === "crag" : overviewPoints().includes(point));
       const markers = visiblePoints.map((point) => {
         const parent = point.parent ? points.find((candidate) => candidate.name === point.parent) : null;
         const children = points.filter((candidate) => candidate.parent === point.name);
@@ -177,10 +177,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const locationFilter = browser.querySelector('[data-filter="location"]');
   const initialLocation = scopedLocation;
   const initialCrag = scopedCrag;
+  const cragLabels = new Map([...cragFilter.options].map((option) => [normalizeFilterValue(option.value), option.textContent]));
+  const updateCragOptions = (locationValue) => {
+    const selectedCrag = normalizeFilterValue(cragFilter.value);
+    const availableCrags = [...new Set(cards
+      .filter((card) => !locationValue || normalizeFilterValue(card.dataset.location) === locationValue)
+      .map((card) => normalizeFilterValue(card.dataset.crag))
+      .filter(Boolean))]
+      .sort((left, right) => (cragLabels.get(left) || left).localeCompare(cragLabels.get(right) || right));
+    cragFilter.replaceChildren(new Option("All crags", ""), ...availableCrags.map((crag) => new Option(cragLabels.get(crag) || crag, crag)));
+    cragFilter.value = availableCrags.includes(selectedCrag) ? selectedCrag : "";
+  };
   if (initialLocation && locationFilter) {
     const matchingLocation = [...locationFilter.options].find((option) => normalizeFilterValue(option.value) === initialLocation);
     if (matchingLocation) locationFilter.value = matchingLocation.value;
   }
+  updateCragOptions(normalizeFilterValue(locationFilter?.value));
   if (initialCrag) {
     const matchingOption = [...cragFilter.options].find((option) => normalizeFilterValue(option.value) === initialCrag);
     if (matchingOption) cragFilter.value = matchingOption.value;
@@ -288,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filter.dataset.filter === "location") {
       scopedLocation = normalizeFilterValue(filter.value);
       scopedCrag = "";
+      updateCragOptions(scopedLocation);
       const url = new URL(window.location.href);
       if (filter.value) url.searchParams.set("location", filter.value);
       else url.searchParams.delete("location");
