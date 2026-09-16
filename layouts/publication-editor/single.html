@@ -65,18 +65,19 @@
         <p class="publication-editor__image-help" data-image-help></p>
       </div>
       <label class="publication-editor__checkbox"><input name="draft" type="checkbox"> Keep as draft</label>
+      <label class="publication-editor__checkbox" data-overwrite-wrap hidden><input name="overwrite" type="checkbox"> Overwrite the existing file with this filename</label>
       <section class="publication-editor__next-steps">
         <h2>Next steps</h2>
         <ol>
           <li>Review the fields above, choose the image option, and set <strong>Keep as draft</strong> if you are not ready to publish.</li>
-          <li>Click <strong>Download Hugo Markdown</strong>.</li>
-          <li>Put the downloaded <code>.md</code> file in <code>content/publications/</code>.</li>
+          <li>If running <code>python tools/site_editor.py</code> locally, click <strong>Save to content/publications/</strong> to write and rebuild directly. Otherwise, click <strong>Download Hugo Markdown</strong> and put the file in <code>content/publications/</code> yourself.</li>
           <li>If you chose a local image, put that image in <code>static/previews/</code> using the path in the <code>image</code> field. Favicon mode does not require an image file.</li>
-          <li>Run <code>hugo --minify</code>, review the result, then commit and push the Markdown file and any local image.</li>
+          <li>Run <code>hugo --minify</code> (done automatically by the local save), review the result, then commit and push the Markdown file and any local image.</li>
         </ol>
       </section>
       <div class="publication-editor__actions">
-        <button type="submit" class="publication-editor__button publication-editor__button--primary">Download Hugo Markdown</button>
+        <button type="button" class="publication-editor__button publication-editor__button--primary" data-save-locally>Save to content/publications/</button>
+        <button type="submit" class="publication-editor__button">Download Hugo Markdown</button>
         <button type="button" class="publication-editor__button" data-copy>Copy Markdown</button>
       </div>
       <p class="publication-editor__status" data-export-status role="status"></p>
