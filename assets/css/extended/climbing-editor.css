@@ -64,6 +64,14 @@
   resize: vertical;
 }
 
+.climbing-editor__short-textarea {
+  min-height: 3.5rem;
+}
+
+.climbing-editor__report-textarea {
+  min-height: 5rem;
+}
+
 .climbing-editor__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -157,4 +165,104 @@
   min-height: 1.3em;
   color: var(--secondary);
   font-size: 0.85rem;
+}
+
+.climbing-hierarchy-graph {
+  margin: 1rem 0;
+  padding: 0.5rem 0;
+  overflow: auto;
+}
+
+.climbing-hierarchy-tree,
+.climbing-hierarchy-tree ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: none;
+}
+
+.climbing-hierarchy-tree > li {
+  padding-left: 0;
+}
+
+.climbing-hierarchy-tree ul {
+  margin-left: 0.55rem;
+  border-left: 1px solid var(--border);
+}
+
+.climbing-hierarchy-tree li {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 0.8rem;
+}
+
+.climbing-hierarchy-tree li::before {
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  width: 0.6rem;
+  border-top: 1px solid var(--border);
+  content: "";
+}
+
+.climbing-hierarchy-tree > li::before {
+  display: none;
+}
+
+.climbing-hierarchy-node {
+  padding: 0.4rem 0.6rem;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.climbing-hierarchy-node:hover,
+.climbing-hierarchy-node[aria-pressed="true"] {
+  border-color: #2f7d4a;
+  box-shadow: 0 0 0 2px rgb(47 125 74 / 0.15);
+}
+
+.climbing-hierarchy-node small {
+  margin-left: 0.35rem;
+  color: var(--secondary);
+}
+
+.climbing-hierarchy-route-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0.6rem 0.8rem !important;
+  padding: 0.65rem !important;
+  border-left: 3px solid #2f7d4a !important;
+  background: var(--code-bg);
+}
+
+.climbing-hierarchy-route-list li {
+  padding: 0 !important;
+}
+
+.climbing-hierarchy-route-list li::before {
+  display: none;
+}
+
+.climbing-hierarchy-route-list button {
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.climbing-hierarchy-route-list small {
+  margin-left: 0.35rem;
+  color: var(--secondary);
+}
+
+.climbing-editor__button--danger {
+  color: #8b1e1e;
+  border-color: #c98282;
 }

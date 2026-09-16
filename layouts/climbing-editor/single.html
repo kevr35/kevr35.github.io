@@ -4,6 +4,7 @@
     <p class="climbing-editor__eyebrow">Moderator tool</p>
     <h1>{{ .Title }}</h1>
     <p>Start with a Mountain Project link or search for a route. The imported fields remain editable, and YouTube is optional. This page only downloads Markdown; it does not publish anything.</p>
+    <p><a class="climbing-editor__button climbing-editor__button--local" href="/climbing/?edit=1">Open interactive climbing editor</a></p>
   </header>
 
   <section class="climbing-editor__panel climbing-editor__lookup">
@@ -23,15 +24,26 @@
     <p class="climbing-editor__status" data-import-status role="status"></p>
   </section>
 
+  <section class="climbing-editor__panel climbing-editor__lookup" data-edit-route>
+    <h2>Edit an existing route</h2>
+    <p>Load a route already saved in <code>content/climbing/</code> to correct its details (crag, wall, grade, notes, etc.) instead of creating a new file.</p>
+    <label for="edit-route-select">Route<small>Search by title, crag, wall, or filename.</small></label>
+    <input id="edit-route-search" type="search" data-edit-route-search placeholder="Filter routes...">
+    <select id="edit-route-select" data-edit-route-select size="6"></select>
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-load-route disabled hidden>Load route into the form below</button>
+    </div>
+    <p class="climbing-editor__status" data-edit-route-status role="status">Available only in the local editor. Run <code>python tools/site_editor.py</code> and open this page at http://127.0.0.1:8000/admin/climbing/.</p>
+  </section>
+
   <form class="climbing-editor__form" data-route-form>
     <section class="climbing-editor__panel">
       <h2>Route details</h2>
       <div class="climbing-editor__grid">
         <label>Route name<input name="title" required></label>
         <label>Climb date <small>YYYY-MM-DD</small><input name="climb_date" type="date"></label>
-        <label>Region<input name="region" list="climbing-regions"><datalist id="climbing-regions">{{ range where site.Data.climbing.locations "level" "region" }}<option value="{{ .name }}">{{ end }}</datalist></label>
-        <label>Location / crag<input name="location" list="climbing-locations"><datalist id="climbing-locations">{{ range where site.Data.climbing.locations "level" "crag" }}<option value="{{ .name }}">{{ end }}</datalist></label>
-        <label>Area / sector<input name="area"></label>
+        <label>Crag<input name="crag" list="climbing-crags"><datalist id="climbing-crags">{{ range where site.Data.climbing.locations "level" "crag" }}<option value="{{ .name }}">{{ end }}</datalist></label>
+        <label>Wall / sector <small>Optional</small><input name="wall"></label>
         <label>Discipline<select name="discipline"><option value="Boulder">Bouldering</option><option value="Sport">Sport</option></select></label>
         <label>Setting<select name="setting"><option>Outdoor</option><option>Indoor</option></select></label>
         <label>Grade<input name="grade" placeholder="V5 or 5.10a"></label>
@@ -39,14 +51,16 @@
         <label>Mountain Project URL<input name="mountain_project_url" type="url"></label>
         <label>YouTube URL <small>Optional</small><input name="youtube_url" type="url" placeholder="https://www.youtube.com/watch?v=..."></label>
       </div>
-      <label>Personal note<textarea name="personal_note" rows="5" placeholder="What this climb meant to me..."></textarea></label>
-      <label>Route report / beta<textarea name="body" rows="6" placeholder="Optional longer account of the climb."></textarea></label>
+      <label>Personal note<textarea class="climbing-editor__short-textarea" name="personal_note" rows="2" placeholder="What this climb meant to me..."></textarea></label>
+      <label>Route report / beta<textarea class="climbing-editor__report-textarea" name="body" rows="3" placeholder="Optional longer account of the climb."></textarea></label>
       <label>Route photos <small>Optional. The first photo becomes the thumbnail when there is no YouTube video. Local mode resizes photos and stores them in static/route-images/&lt;route&gt;/.</small><input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple data-route-photos></label>
       <p class="climbing-editor__photo-status" data-photo-status></p>
       <label>Filename <small>Without `.md`; spaces become hyphens</small><input name="filename" required></label>
       <label class="climbing-editor__checkbox"><input name="draft" type="checkbox"> Keep as draft</label>
-      <label class="climbing-editor__checkbox climbing-editor__location-prompt" data-location-prompt hidden><input name="add_location" type="checkbox" checked> Add <span data-location-name></span> to the shared location registry using the imported coordinates</label>
-        <label class="climbing-editor__checkbox climbing-editor__location-prompt" data-location-prompt hidden><input name="add_location" type="checkbox"> Add <span data-location-name></span> to the shared location registry using the imported coordinates</label>
+      <div class="climbing-editor__location-prompt" data-location-prompt hidden>
+        <p><strong>New crag hierarchy detected.</strong> Verify the imported crag and wall above before adding this crag to the shared registry.</p>
+        <label class="climbing-editor__checkbox"><input name="add_crag" type="checkbox" checked> Add <span data-location-name></span> to the shared location registry using the imported hierarchy and coordinates</label>
+      </div>
     </section>
 
     <section class="climbing-editor__next-steps">
@@ -68,9 +82,72 @@
     <p class="climbing-editor__status" data-export-status role="status"></p>
     <label class="climbing-editor__preview-label">Generated Markdown<textarea data-markdown-preview rows="20" readonly></textarea></label>
   </form>
+
+  <section class="climbing-editor__panel climbing-editor__lookup" data-bulk-import>
+    <h2>Bulk import a tick list</h2>
+    <p>On Mountain Project, open your profile, choose <strong>Ticks</strong>, then <strong>Export</strong> to download a CSV of every logged ascent. The importer matches each source location and crag to the existing registry. For an unfamiliar pair, choose its standard destination before any files are written. Existing routes (matched by filename or Mountain Project URL) are skipped unless you allow overwriting.</p>
+    <label for="tick-csv">Tick list CSV<textarea id="tick-csv" rows="6" data-tick-csv placeholder="Date,Route,Rating,Notes,URL,Pitches,Location,Avg Stars,Your Stars,Style,Lead Style,Route Type,Your Rating,Length,Rating Code"></textarea></label>
+    <label class="climbing-editor__checkbox"><input type="checkbox" data-tick-fetch-gps checked> Look up GPS coordinates for new crags (fetches each route page; slower)</label>
+    <label class="climbing-editor__checkbox"><input type="checkbox" data-tick-overwrite> Allow replacing routes that already exist</label>
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-import-ticks disabled hidden>Review hierarchy and import</button>
+    </div>
+    <div data-tick-resolutions hidden></div>
+    <p class="climbing-editor__status" data-tick-status role="status">Available only in the local editor. Run <code>python tools/site_editor.py</code> and open this page at http://127.0.0.1:8000/admin/climbing/.</p>
+  </section>
+
+  <section class="climbing-editor__panel climbing-editor__lookup" data-rebuild-locations>
+    <h2>Rebuild the location registry</h2>
+    <p>Scans every saved route in <code>content/climbing/</code>, cleans up naming issues (like Mountain Project's <code>*</code> starred-crag marker), and adds any crag or location missing from <code>data/climbing/locations.yaml</code>. Safe to run any time the map is missing a location, including after manual edits.</p>
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-rebuild-locations-button disabled hidden>Rebuild location registry</button>
+    </div>
+    <p class="climbing-editor__status" data-rebuild-status role="status"></p>
+  </section>
+
+  <section class="climbing-editor__panel climbing-editor__lookup" data-manage-location>
+    <h2>Manage a crag</h2>
+    <p>Rename a mislabeled crag, or split a lumped-together one (like "CT Bouldering") into its real sub-crags. Every route that matches gets its <code>crag</code> (and <code>location</code>) updated together, and <code>data/climbing/locations.yaml</code> stays in sync so future imports from the same crag inherit the fix.</p>
+    <div class="climbing-editor__grid">
+      <label>Current crag name<input list="climbing-crags" data-manage-old-crag placeholder="e.g. CT Bouldering"></label>
+      <label>Only routes whose wall contains <small>Optional — leave blank to move every route at the current crag</small><input data-manage-wall-filter placeholder="e.g. Sleeping Giant"></label>
+    </div>
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button" data-manage-usage-button>Show routes at this crag</button>
+    </div>
+    <div data-manage-usage-list></div>
+    <div class="climbing-editor__grid">
+      <label>New crag name<input list="climbing-crags" data-manage-new-crag placeholder="e.g. Sleeping Giant"></label>
+      <label>Latitude <small>Optional — reuses existing coordinates if left blank</small><input data-manage-latitude></label>
+      <label>Longitude <small>Optional — reuses existing coordinates if left blank</small><input data-manage-longitude></label>
+    </div>
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-manage-apply-button disabled hidden>Apply</button>
+    </div>
+    <p class="climbing-editor__status" data-manage-status role="status">Available only in the local editor. Run <code>python tools/site_editor.py</code> and open this page at http://127.0.0.1:8000/admin/climbing/.</p>
+  </section>
+
+  <section class="climbing-editor__panel climbing-editor__lookup" data-hierarchy-editor>
+    <h2>Location hierarchy</h2>
+    <p>Select a node in the graph to rename it or choose its parent. Crags must belong to a location; locations must belong to a state. Saving updates every affected route and rebuilds the site.</p>
+    <div class="climbing-hierarchy-graph" data-hierarchy-graph></div>
+    <div class="climbing-editor__grid" data-hierarchy-fields hidden>
+      <label>Selected node<input data-hierarchy-old-name readonly></label>
+      <label>Name<input data-hierarchy-name></label>
+      <label>Parent <small>Locations belong to states; crags belong to locations.</small><select data-hierarchy-parent></select></label>
+      <p class="climbing-editor__status" data-hierarchy-impact></p>
+    </div>
+    <div class="climbing-editor__actions" data-hierarchy-actions hidden>
+      <button type="button" class="climbing-editor__button climbing-editor__button--local" data-hierarchy-save>Save hierarchy change</button>
+      <button type="button" class="climbing-editor__button climbing-editor__button--danger" data-hierarchy-delete>Delete empty node</button>
+    </div>
+    <p class="climbing-editor__status" data-hierarchy-status role="status">Available only in the local editor.</p>
+  </section>
 </div>
   {{ $archetype := readFile "archetypes/climbing-route.md" }}
   <script type="application/json" data-climbing-archetype>{{ $archetype | jsonify }}</script>
+{{- $dialogScript := resources.Get "js/climbing-route-dialog.js" | minify | fingerprint -}}
+<script defer src="{{ $dialogScript.RelPermalink }}"></script>
 {{- $script := resources.Get "js/climbing-editor.js" | minify | fingerprint -}}
 <script defer src="{{ $script.RelPermalink }}"></script>
 {{- end -}}

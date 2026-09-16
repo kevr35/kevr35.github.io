@@ -91,7 +91,7 @@ The editor does not authenticate, write to GitHub, or publish changes. It contai
 
 ### Climbing
 
-Climbing entries follow the Mountain Project hierarchy: `region` (for example, Red River Gorge), `location` (the crag, such as Muir Valley), and `area` (the wall or sector, such as Solarium). Shared crag coordinates live once in `data/climbing/locations.yaml`; route files store the hierarchy names. The map shows a region only when it contains multiple crags; a region with one crag shows that crag directly.
+Climbing entries store only route-specific hierarchy fields: `crag` and optional `wall`. State and location are inherited from the crag's parent records in `data/climbing/locations.yaml`. The map shows a location only when it contains multiple crags; a location with one crag shows that crag directly. Run `python tools/clean_locations.py` to validate the relationship before publishing.
 
 Climbing pages send a `noimageindex` directive, and future route photos should be stored under `/route-images/`, which is disallowed in `robots.txt`. These are crawler instructions, not access control: public images can still be viewed, copied, or indexed by systems that ignore them.
 

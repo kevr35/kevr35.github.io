@@ -21,17 +21,19 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const queryFilters = new URLSearchParams(window.location.search);
-  let scopedRegion = normalizeFilterValue(queryFilters.get("region"));
   let scopedLocation = normalizeFilterValue(queryFilters.get("location"));
-  let scopedArea = normalizeFilterValue(queryFilters.get("area"));
+  let scopedCrag = normalizeFilterValue(queryFilters.get("crag"));
+  let scopedWall = normalizeFilterValue(queryFilters.get("wall"));
+  let scopedMapLocation = normalizeFilterValue(queryFilters.get("map"));
   const mapElement = document.querySelector("[data-map-points]");
   const mapReset = document.querySelector("[data-map-reset]");
-  if (mapReset && (window.location.search.includes("region=") || window.location.search.includes("location=") || window.location.search.includes("area="))) mapReset.hidden = false;
+  if (mapReset && (window.location.search.includes("location=") || window.location.search.includes("crag=") || window.location.search.includes("wall=") || window.location.search.includes("map="))) mapReset.hidden = false;
   let refreshMap = () => {};
   const currentScope = () => ({
-    region: normalizeFilterValue(document.querySelector('[data-filter="region"]')?.value) || scopedRegion,
     location: normalizeFilterValue(document.querySelector('[data-filter="location"]')?.value) || scopedLocation,
-    area: scopedArea,
+    crag: normalizeFilterValue(document.querySelector('[data-filter="crag"]')?.value) || scopedCrag,
+    wall: scopedWall,
+    mapLocation: scopedMapLocation,
   });
   const showMapFallback = (message = "Map tiles could not be loaded. The climbing location data is still available below.") => {
     if (mapElement && !mapElement.dataset.mapInitialized) {
@@ -59,35 +61,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }[character]));
     const locationLink = (point) => {
       const query = new URLSearchParams();
-      if (point.filterRegion) query.set("region", point.filterRegion);
-      if (point.filterLocation) query.set("location", point.filterLocation);
+      if (point.level === "location") query.set("map", point.name);
+      else {
+        if (point.filterLocation) query.set("location", point.filterLocation);
+        if (point.filterCrag) query.set("crag", point.filterCrag);
+      }
       return `<a href="/climbing/?${query.toString()}">${escapeHtml(point.name)}</a>`;
     };
-    const hasMultipleCrags = (point) => points.filter((candidate) => candidate.parent === point.name).length > 1;
-    const overviewPoints = () => points.filter((point) => {
-      if (point.parent) {
-        const parent = points.find((candidate) => candidate.name === point.parent);
-        return !parent || (parent.level === "region" && !hasMultipleCrags(parent));
-      }
-      return point.level !== "region" || hasMultipleCrags(point);
-    });
+    const hasMultipleCrags = (point) => points.filter((candidate) => candidate.parent === point.name && candidate.level === "crag").length > 1;
+    const hasMultipleLocations = (point) => points.filter((candidate) => candidate.parent === point.name && candidate.level === "location").length > 0;
+    // States provide geographic context; single-crag locations can use the crag pin directly.
+    const overviewPoints = () => points
+      .filter((point) => point.level === "location")
+      .flatMap((location) => {
+        const crags = points.filter((point) => point.parent === location.name && point.level === "crag");
+        return crags.length === 1 ? crags : [location];
+      });
     const scopedMapPoints = () => {
       const scope = currentScope();
+      const selectedCrag = scope.crag;
       const selectedLocation = scope.location;
-      const selectedRegion = scope.region;
-      const selectedArea = scope.area;
-      if (!selectedLocation && !selectedRegion) return points;
-      const location = points.find((point) => normalizeFilterValue(point.name) === selectedLocation);
-      const childLocations = points.filter((point) => normalizeFilterValue(point.parent) === (selectedLocation || selectedRegion));
+      const selectedWall = scope.wall;
+      const selectedMapLocation = scope.mapLocation;
+      if (selectedMapLocation) {
+        const children = points.filter((point) => normalizeFilterValue(point.parent) === selectedMapLocation);
+        return children.length
+          ? children
+          : points.filter((point) => normalizeFilterValue(point.name) === selectedMapLocation);
+      }
+      if (!selectedCrag && !selectedLocation) return points;
+      const crag = points.find((point) => normalizeFilterValue(point.name) === selectedCrag);
+      const childCrags = points.filter((point) => normalizeFilterValue(point.parent) === (selectedCrag || selectedLocation));
       return points.filter((point) => {
         const pointName = normalizeFilterValue(point.name);
         const pointParent = normalizeFilterValue(point.parent);
-        const selectedParent = normalizeFilterValue(location?.parent);
-        const pointRegion = normalizeFilterValue(point.level === "region" ? point.name : point.parent);
-        if (selectedRegion && !selectedLocation) return pointParent === selectedRegion;
-        if (selectedLocation) return pointName === selectedLocation;
-        if (!selectedArea && childLocations.length) return pointParent === selectedLocation;
-        return pointName === selectedLocation || pointParent === selectedLocation || (selectedParent && pointName === selectedParent);
+        const selectedParent = normalizeFilterValue(crag?.parent);
+        if (selectedLocation && !selectedCrag) return pointParent === selectedLocation;
+        if (selectedCrag) return pointName === selectedCrag;
+        if (!selectedWall && childCrags.length) return pointParent === selectedCrag;
+        return pointName === selectedCrag || pointParent === selectedCrag || (selectedParent && pointName === selectedParent);
       });
     };
     const renderLocationMarkers = (fitToScope = false) => {
@@ -97,12 +109,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const scopedPoints = scopedMapPoints();
       const zoomedIn = map.getZoom() >= 9;
       const hasScope = scopedPoints !== points;
-      const visiblePoints = hasScope ? scopedPoints : scopedPoints.filter((point) => zoomedIn ? point.parent || !points.some((candidate) => candidate.name === point.name && candidate.level === "region") : overviewPoints().includes(point));
+      const visiblePoints = hasScope ? scopedPoints : scopedPoints.filter((point) => zoomedIn ? point.level !== "state" : overviewPoints().includes(point));
       const markers = visiblePoints.map((point) => {
         const parent = point.parent ? points.find((candidate) => candidate.name === point.parent) : null;
         const children = points.filter((candidate) => candidate.parent === point.name);
         const titlePoint = point;
-        const related = point.level === "region" ? children : [];
+        const related = point.level === "location" ? children : [];
         const links = [...new Map(related.map((relatedPoint) => [relatedPoint.name, locationLink(relatedPoint)])).values()];
         const popup = `<strong>${locationLink(titlePoint)}</strong>${links.length ? `<ul>${links.map((link) => `<li>${link}</li>`).join("")}</ul>` : ""}`;
         return L.marker([Number(point.latitude), Number(point.longitude)]).addTo(map).bindPopup(popup);
@@ -113,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshMap = () => renderLocationMarkers(true);
     renderLocationMarkers(true);
       map.on("zoomend", () => renderLocationMarkers(false));
-      const hasLocationScope = new URLSearchParams(window.location.search).has("region") || new URLSearchParams(window.location.search).has("location");
+      const hasLocationScope = new URLSearchParams(window.location.search).has("location") || new URLSearchParams(window.location.search).has("crag") || new URLSearchParams(window.location.search).has("map");
       const initialPoints = overviewPoints();
       if (!hasLocationScope && initialPoints.length) map.fitBounds(L.featureGroup(initialPoints.map((point) => L.marker([Number(point.latitude), Number(point.longitude)]))).getBounds().pad(0.25));
       mapElement.dataset.mapInitialized = "true";
@@ -161,17 +173,17 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const cardGrades = new Map(cards.map((card) => [card, gradeInfo(card)]));
+  const cragFilter = browser.querySelector('[data-filter="crag"]');
   const locationFilter = browser.querySelector('[data-filter="location"]');
-  const regionFilter = browser.querySelector('[data-filter="region"]');
-  const initialRegion = scopedRegion;
   const initialLocation = scopedLocation;
-  if (initialRegion && regionFilter) {
-    const matchingRegion = [...regionFilter.options].find((option) => normalizeFilterValue(option.value) === initialRegion);
-    if (matchingRegion) regionFilter.value = matchingRegion.value;
+  const initialCrag = scopedCrag;
+  if (initialLocation && locationFilter) {
+    const matchingLocation = [...locationFilter.options].find((option) => normalizeFilterValue(option.value) === initialLocation);
+    if (matchingLocation) locationFilter.value = matchingLocation.value;
   }
-  if (initialLocation) {
-    const matchingOption = [...locationFilter.options].find((option) => normalizeFilterValue(option.value) === initialLocation);
-    if (matchingOption) locationFilter.value = matchingOption.value;
+  if (initialCrag) {
+    const matchingOption = [...cragFilter.options].find((option) => normalizeFilterValue(option.value) === initialCrag);
+    if (matchingOption) cragFilter.value = matchingOption.value;
   }
 
   ["bouldering", "sport"].forEach((kind) => {
@@ -240,9 +252,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const grade = cardGrades.get(card);
       const matchesBasicFilters = Object.entries(activeFilters).every(([key, value]) => !value || card.dataset[key] === value);
       const scope = currentScope();
-      const matchesMapScope = (!scope.region || normalizeFilterValue(card.dataset.region) === scope.region)
-        && (!scope.location || normalizeFilterValue(card.dataset.location) === scope.location)
-        && (!scope.area || normalizeFilterValue(card.dataset.area).startsWith(scope.area));
+      const matchesMapScope = scope.mapLocation
+        ? normalizeFilterValue(card.dataset.location) === scope.mapLocation || normalizeFilterValue(card.dataset.crag) === scope.mapLocation
+        : (!scope.location || normalizeFilterValue(card.dataset.location) === scope.location)
+          && (!scope.crag || normalizeFilterValue(card.dataset.crag) === scope.crag)
+          && (!scope.wall || normalizeFilterValue(card.dataset.wall).startsWith(scope.wall));
       const range = ranges[grade.kind];
       if (!matchesBasicFilters || !matchesMapScope || !range) return matchesBasicFilters && matchesMapScope;
 
@@ -256,10 +270,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (videoPriority) return videoPriority;
       const mode = sortSelect.value;
       if (mode === "title") return left.dataset.title.localeCompare(right.dataset.title);
+      if (mode === "location") return left.dataset.location.localeCompare(right.dataset.location);
       if (mode === "grade") {
         const leftGrade = cardGrades.get(left);
         const rightGrade = cardGrades.get(right);
-        return leftGrade.kind.localeCompare(rightGrade.kind) || leftGrade.value - rightGrade.value;
+        return leftGrade.kind.localeCompare(rightGrade.kind) || rightGrade.value - leftGrade.value;
       }
       const comparison = left.dataset.date.localeCompare(right.dataset.date);
       return mode === "date-asc" ? comparison : -comparison;
@@ -270,25 +285,25 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   filters.forEach((filter) => filter.addEventListener("change", () => {
-    if (filter.dataset.filter === "region") {
-      scopedRegion = normalizeFilterValue(filter.value);
-      scopedLocation = "";
-      const url = new URL(window.location.href);
-      if (filter.value) url.searchParams.set("region", filter.value);
-      else url.searchParams.delete("region");
-      url.searchParams.delete("location");
-      url.searchParams.delete("area");
-      window.history.replaceState({}, "", url);
-      scopedArea = "";
-      if (locationFilter) locationFilter.value = "";
-      if (mapReset) mapReset.hidden = !filter.value;
-    } else if (filter.dataset.filter === "location") {
+    if (filter.dataset.filter === "location") {
       scopedLocation = normalizeFilterValue(filter.value);
-      scopedArea = "";
+      scopedCrag = "";
       const url = new URL(window.location.href);
       if (filter.value) url.searchParams.set("location", filter.value);
       else url.searchParams.delete("location");
-      url.searchParams.delete("area");
+      url.searchParams.delete("crag");
+      url.searchParams.delete("wall");
+      window.history.replaceState({}, "", url);
+      scopedWall = "";
+      if (cragFilter) cragFilter.value = "";
+      if (mapReset) mapReset.hidden = !filter.value;
+    } else if (filter.dataset.filter === "crag") {
+      scopedCrag = normalizeFilterValue(filter.value);
+      scopedWall = "";
+      const url = new URL(window.location.href);
+      if (filter.value) url.searchParams.set("crag", filter.value);
+      else url.searchParams.delete("crag");
+      url.searchParams.delete("wall");
       window.history.replaceState({}, "", url);
       if (mapReset) mapReset.hidden = !filter.value;
     }

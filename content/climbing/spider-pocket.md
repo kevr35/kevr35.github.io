@@ -2,9 +2,8 @@
 title: "Spider Pocket"
 date: 2026-09-10T18:36:39.102Z
 climb_date: "2023-11-04"
-region: "Northeast Ohio"
-location: "Chippewa Creek"
-area: "Midstream"
+crag: "Chippewa Creek"
+wall: "Midstream"
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V4"

@@ -1,10 +1,9 @@
 ---
 title: "Banshee"
-region: "Red River Gorge"
 date: 2026-09-10T17:01:39.834Z
 climb_date: "2024-03-23"
-location: "Muir Valley"
-area: "Solarium"
+crag: "Muir Valley"
+wall: "Solarium"
 discipline: "Sport"
 setting: "Outdoor"
 grade: "5.11c"
