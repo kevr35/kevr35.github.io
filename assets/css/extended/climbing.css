@@ -554,35 +554,6 @@
   font-size: 0.9rem;
 }
 
-.climbing-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-  min-height: 2.5rem;
-  padding: 0.55rem 0.9rem;
-  color: var(--secondary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--entry);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.climbing-back-link:hover {
-  color: var(--primary);
-  border-color: var(--primary);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
-}
-
-.climbing-back-link span {
-  color: var(--primary);
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
 .climbing-route__facts span {
   display: grid;
   gap: 0.15rem;
@@ -645,9 +616,6 @@
     height: 20rem;
   }
 
-  .climbing-back-link {
-    margin-bottom: 0.75rem;
-  }
 
   .climbing-controls {
     grid-template-columns: 1fr;

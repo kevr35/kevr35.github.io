@@ -92,6 +92,7 @@
   border-radius: 8px;
   background: var(--entry);
   text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .home-writing-card {
@@ -156,6 +157,8 @@
 .home-climbing-card:hover,
 .home-writing-card:hover {
   border-color: var(--primary);
+  transform: scale(1.015);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {

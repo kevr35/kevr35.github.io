@@ -1,7 +1,7 @@
 {{ define "main" }}
 <article class="notebook-single">
-<header class="page-header">
-    <a href="{{ "notebooks/" | relLangURL }}" class="climbing-back-link"><span aria-hidden="true">&#8592;</span> Back to Notebooks</a>
+  <header class="page-header">
+    {{ partial "back-button.html" (dict "url" ("notebooks/" | relLangURL) "label" "Back to Notebooks") }}
     <h1>{{ .Title }}</h1>
     {{ if .Params.description }}<p>{{ .Params.description }}</p>{{ end }}
     <div style="margin: 8px 0;">

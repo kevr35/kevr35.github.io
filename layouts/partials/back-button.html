@@ -1,0 +1,9 @@
+{{/*
+  back-button.html
+  Parameters:
+    .url   - the href for the back link
+    .label - the human-readable text (e.g., "Back to Writings")
+*/}}
+<a href="{{ .url }}" class="back-link">
+  <span aria-hidden="true">&#8592;</span> {{ .label }}
+</a>

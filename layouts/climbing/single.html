@@ -2,7 +2,7 @@
 {{- $routePage := . -}}
 <article class="post-single climbing-route">
   <header class="post-header">
-    <a class="climbing-back-link" href="{{ .Parent.RelPermalink }}"><span aria-hidden="true">&#8592;</span> Back to Climbing Log</a>
+    {{ partial "back-button.html" (dict "url" .Parent.RelPermalink "label" "Back to Climbing Log") }}
     <h1>{{ .Title }}</h1>
     {{ with .Description }}<div class="post-description">{{ . }}</div>{{ end }}
     <div class="climbing-route__facts">
