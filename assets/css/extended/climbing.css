@@ -260,15 +260,22 @@
   gap: 1rem;
 }
 
-.climbing-card {
+ .climbing-card {
+  cursor: pointer;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--entry);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .climbing-card[hidden] {
   display: none;
+}
+
+.climbing-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .climbing-card__edit {
@@ -614,7 +621,12 @@
 
   .climbing-map {
     height: 20rem;
-  }
+}
+
+.climbing-card:hover {
+  transform: scale(1.015);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
 
   .climbing-controls {

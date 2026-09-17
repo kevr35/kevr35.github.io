@@ -173,6 +173,20 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const cardGrades = new Map(cards.map((card) => [card, gradeInfo(card)]));
+
+// Make whole card clickable (except internal links)
+cards.forEach(card => {
+  card.addEventListener('click', (e) => {
+    // If click originated from a link, let default behavior occur
+    if (e.target.closest('a')) return;
+    const mediaLink = card.querySelector('a.climbing-card__media');
+    const titleLink = card.querySelector('h2 a');
+    const target = mediaLink || titleLink;
+    if (target && target.href) {
+      window.location.href = target.href;
+    }
+  });
+});
   const cragFilter = browser.querySelector('[data-filter="crag"]');
   const locationFilter = browser.querySelector('[data-filter="location"]');
   const initialLocation = scopedLocation;

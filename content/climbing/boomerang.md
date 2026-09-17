@@ -12,9 +12,10 @@ mountain_project_url: "https://www.mountainproject.com/route/106733767/boomerang
 youtube_url: "https://youtube.com/shorts/gl1cR5X8JEA"
 thumbnail: ""
 photos: []
-personal_note: "Rob sprayed me down"
+personal_note: ""
 tags:
   - "Climbing"
 draft: false
 ---
 
+Rob sprayed me down
