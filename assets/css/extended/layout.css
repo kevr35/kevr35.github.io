@@ -9,6 +9,51 @@
   margin-left: auto;
 }
 
+.home-banner {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 1.25rem;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.home-info.first-entry {
+  min-height: 0;
+  margin: var(--gap) 0 calc(var(--gap) * 2);
+}
+
+.home-banner img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.home-banner::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 35%, rgba(0, 0, 0, 0.6));
+  content: "";
+  pointer-events: none;
+}
+
+.home-banner figcaption {
+  position: absolute;
+  z-index: 1;
+  right: 1rem;
+  bottom: 0.85rem;
+  left: 1.25rem;
+}
+
+.home-banner h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  line-height: 1.2;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
 .climbing-header,
 .climbing-intro {
   text-align: center;

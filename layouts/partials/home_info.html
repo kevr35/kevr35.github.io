@@ -1,0 +1,16 @@
+{{- with site.Params.homeInfoParams }}
+<article class="first-entry home-info">
+    <figure class="home-banner">
+        <img src="{{ "Headers/Dartmouth_View.jpeg" | relURL }}" alt="View of Dartmouth College at sunset">
+        <figcaption>
+            <h1>{{ .Title | markdownify }}</h1>
+        </figcaption>
+    </figure>
+    <div class="entry-content">
+        {{ .Content | markdownify }}
+    </div>
+    <footer class="entry-footer">
+        {{ partial "social_icons.html" (dict "align" site.Params.homeInfoParams.AlignSocialIconsTo) }}
+    </footer>
+</article>
+{{- end -}}
