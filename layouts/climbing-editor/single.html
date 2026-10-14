@@ -73,10 +73,17 @@
 
   <section class="climbing-editor__panel climbing-editor__lookup" data-bulk-import>
     <h2>Bulk import a tick list</h2>
-    <p>On Mountain Project, open your profile, choose <strong>Ticks</strong>, then <strong>Export</strong> to download a CSV of every logged ascent. The importer matches each source crag to the existing registry. For an unfamiliar hierarchy, explicitly choose the standard parent location and crag names before any files are written. Existing routes (matched by filename or Mountain Project URL) are skipped unless you allow overwriting.</p>
-    <label for="tick-csv">Tick list CSV<textarea id="tick-csv" rows="6" data-tick-csv placeholder="Date,Route,Rating,Notes,URL,Pitches,Location,Avg Stars,Your Stars,Style,Lead Style,Route Type,Your Rating,Length,Rating Code"></textarea></label>
+    <p>On Mountain Project, open your profile, choose <strong>Ticks</strong>, then <strong>Export</strong> to download a CSV of every logged ascent. For an unfamiliar hierarchy, explicitly choose its standard parent location and crag names. A new crag under a registered location is added automatically, using route GPS coordinates or the parent location's approximate coordinates. Ticks for a route are merged into one Markdown file; existing ticks are not duplicated, and an RSS re-import can fill a missing ascent style.</p>
+    <div data-tick-rss-import hidden>
+      <label for="tick-rss-url">Or load recent ticks from an RSS feed <small>The feed contains up to 50 recent ticks. RSS publish dates are used as climb dates; review them. Route pages provide the area hierarchy, and the public tick list provides ascent styles when route/date matches are unique.</small></label>
+      <div class="climbing-editor__search-controls">
+        <input id="tick-rss-url" type="url" data-tick-rss-url value="https://www.mountainproject.com/rss/user-ticks/201581856">
+        <button type="button" class="climbing-editor__button climbing-editor__button--local" data-fetch-tick-rss>Load RSS ticks</button>
+      </div>
+      <p class="climbing-editor__status" data-tick-rss-status role="status"></p>
+    </div>
+    <label for="tick-csv">Tick list CSV<textarea id="tick-csv" rows="6" data-tick-csv placeholder="Date,Route,Rating,Notes,URL,Pitches,Location,Avg Stars,Your Stars,Style,Lead Style,Route Type,Your Rating,Length,Rating Code,Tick ID (optional)"></textarea></label>
     <label class="climbing-editor__checkbox"><input type="checkbox" data-tick-fetch-gps checked> Look up GPS coordinates for new crags (fetches each route page; slower)</label>
-    <label class="climbing-editor__checkbox"><input type="checkbox" data-tick-overwrite> Allow replacing routes that already exist</label>
     <div class="climbing-editor__actions">
       <button type="button" class="climbing-editor__button climbing-editor__button--local" data-import-ticks disabled hidden>Review hierarchy and import</button>
     </div>
@@ -86,7 +93,7 @@
 
   <section class="climbing-editor__panel climbing-editor__lookup" data-indoor-import>
     <h2>Add an indoor or board climb from a video</h2>
-    <p>Paste a YouTube or Instagram link. The title, date, grade, gym or board, and board angle are detected from the video and stay editable. Gyms and boards must exist in <code>data/climbing/gyms.yaml</code> / <code>boards.yaml</code>.</p>
+    <p>Paste a YouTube or Instagram link. The title, date, grade, gym or board, and board angle are detected from the video and stay editable. If a gym is missing, add it to the shared gym list from this form before saving the climb. Boards are listed in <code>boards.yaml</code>.</p>
     <label for="indoor-url">Video URL</label>
     <input id="indoor-url" type="url" data-indoor-url placeholder="https://youtube.com/shorts/...">
     <div class="climbing-editor__actions">
@@ -98,11 +105,27 @@
         <label>Date climbed<input data-indoor-field="climb_date" placeholder="YYYY-MM-DD"></label>
         <label>Grade<input data-indoor-field="grade"></label>
         <label>Discipline<input data-indoor-field="discipline"></label>
-        <label>Gym<select data-indoor-field="gym"></select></label>
+        <div>
+          <label>Gym<select data-indoor-field="gym"></select></label>
+          <button type="button" class="climbing-editor__button" data-indoor-gym-toggle>Add a new gym</button>
+        </div>
         <label>Board <small>Choose one for board climbs</small><select data-indoor-field="board"></select></label>
         <label>Board angle<input data-indoor-field="board_angle" inputmode="numeric"></label>
         <label>Link to the problem on the board<input data-indoor-field="board_url" type="url"></label>
         <label>Filename<input data-indoor-filename></label>
+      </div>
+      <div class="climbing-editor__add-gym" data-indoor-gym-panel hidden>
+        <p>Add the gym to <code>data/climbing/gyms.yaml</code>. Only the name is required; city, state, and website are optional.</p>
+        <div class="climbing-editor__grid">
+          <label>Gym name<input data-indoor-new-gym-name maxlength="120"></label>
+          <label>City<input data-indoor-new-gym-city></label>
+          <label>State or region<input data-indoor-new-gym-state></label>
+          <label>Website URL<input data-indoor-new-gym-url type="url" placeholder="https://example.com"></label>
+        </div>
+        <div class="climbing-editor__actions">
+          <button type="button" class="climbing-editor__button climbing-editor__button--local" data-indoor-gym-add>Save gym to list</button>
+          <button type="button" class="climbing-editor__button" data-indoor-gym-cancel>Cancel</button>
+        </div>
       </div>
       <label class="climbing-editor__checkbox"><input type="checkbox" data-indoor-overwrite> Allow replacing an existing file</label>
       <div class="climbing-editor__actions">

@@ -3,16 +3,21 @@
 import json
 import base64
 import csv
+import hashlib
+import html as html_lib
 import io
 import re
 import subprocess
 import time
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from http.server import SimpleHTTPRequestHandler
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, unquote, urljoin, urlparse
 from PIL import Image, ImageOps
 import indoor_import
 
@@ -146,16 +151,13 @@ def save_route_photos(route_slug, photos):
         image.save(destination / f"{index:02d}.jpg", format="JPEG", quality=82, optimize=True)
 
 
-def existing_route_urls():
-    urls = set()
+def existing_route_files_by_url():
+    routes = {}
     for path in CONTENT.glob("*.md"):
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.startswith("mountain_project_url:"):
-                value = line.split(":", 1)[1].strip().strip('"')
-                if value:
-                    urls.add(value.split("?")[0].rstrip("/"))
-                break
-    return urls
+        route_url = normalize_url(read_frontmatter_value(path.read_text(encoding="utf-8"), "mountain_project_url"))
+        if route_url:
+            routes.setdefault(route_url, path)
+    return routes
 
 
 def normalize_url(url):
@@ -174,6 +176,13 @@ def parse_climb_date(value):
 
 def hierarchy_key(location, crag):
     return " > ".join(clean_location_name(value).casefold() for value in (location, crag))
+
+
+def hierarchy_name_key(value):
+    name = clean_location_name(value).casefold()
+    name = re.sub(r"^\d+[.)]\s*", "", name)
+    name = re.sub(r"^(?:the|a|an)\s+", "", name)
+    return re.sub(r"[^a-z0-9]+", "", name)
 
 
 def read_import_overrides():
@@ -204,7 +213,9 @@ def resolve_tick_hierarchy(info, overrides=None, locations=None, route_hierarchi
     key = hierarchy_key(source_location, source_crag)
     result = {"key": key, "source_location": source_location, "source_crag": source_crag}
     if not source_location or not source_crag:
-        return result | {"status": "unresolved", "location": source_location, "crag": source_crag}
+        segments = info.get("location_segments") or []
+        if not segments:
+            return result | {"status": "unresolved", "location": source_location, "crag": source_crag}
     locations = locations if locations is not None else read_locations()
     route_hierarchies = route_hierarchies if route_hierarchies is not None else known_route_hierarchies()
 
@@ -223,13 +234,26 @@ def resolve_tick_hierarchy(info, overrides=None, locations=None, route_hierarchi
     if isinstance(override, dict) and override.get("location") and override.get("crag"):
         return result | {"status": "override", "location": clean_location_name(override["location"]), "crag": clean_location_name(override["crag"])}
 
+    normalized_segments = {hierarchy_name_key(segment) for segment in segments}
+    known_crags = [location for location in locations if location.get("level") == "crag"]
+    for known_crag in known_crags:
+        parent = known_crag.get("parent", "")
+        if hierarchy_name_key(known_crag["name"]) not in normalized_segments:
+            continue
+        if hierarchy_name_key(parent) in normalized_segments:
+            return result | {"status": "matched", "location": parent, "crag": known_crag["name"]}
+
+    named_crags = [crag for crag in known_crags if hierarchy_name_key(crag["name"]) in normalized_segments]
+    if len(named_crags) == 1:
+        known_crag = named_crags[0]
+        return result | {"status": "matched", "location": known_crag.get("parent", ""), "crag": known_crag["name"]}
+
     for location_name, crag_name in pairs:
         known_crag = next(
             (
-                location for location in locations
-                if location["name"].casefold() == crag_name.casefold()
-                and location.get("parent", "").casefold() == location_name.casefold()
-                and location.get("level") == "crag"
+                location for location in known_crags
+                if hierarchy_name_key(location["name"]) == hierarchy_name_key(crag_name)
+                and hierarchy_name_key(location.get("parent", "")) == hierarchy_name_key(location_name)
             ),
             None,
         )
@@ -251,7 +275,7 @@ def resolve_tick_hierarchy(info, overrides=None, locations=None, route_hierarchi
 
 
 def parse_tick_row(row):
-    normalized = {str(key).strip().lower(): value for key, value in row.items() if key}
+    normalized = {str(key).strip().lstrip("\ufeff").lower(): value for key, value in row.items() if key}
 
     def get(*names):
         for name in names:
@@ -261,7 +285,12 @@ def parse_tick_row(row):
         return ""
 
     location_raw = get("location")
-    segments = [clean_location_name(segment) for segment in LOCATION_SEPARATOR.split(location_raw) if clean_location_name(segment)] if location_raw else []
+    segments = [
+        re.sub(r"^\d+[.)]\s*", "", clean_location_name(segment))
+        for segment in LOCATION_SEPARATOR.split(location_raw)
+        if clean_location_name(segment)
+    ] if location_raw else []
+    location_segments = segments.copy()
     # The leading state/country is geographic context, not the climbing destination.
     state = segments[0] if len(segments) >= 3 else ""
     if state:
@@ -273,15 +302,203 @@ def parse_tick_row(row):
         "grade": get("rating", "your rating"),
         "personal_note": get("notes"),
         "climb_date": parse_climb_date(get("date")),
-        "ascent_type": get("lead style") or get("style") or "Send",
+        "ascent_type": get("lead style") or get("style") or ("" if get("import source").casefold() == "rss" else "Send"),
         "discipline": route_type.split(",")[0].strip() if route_type else "Sport",
         "setting": "Outdoor",
+        "tick_id": get("tick id"),
         "state": state,
         "location": segments[0] if len(segments) > 0 else "",
         "crag": segments[1] if len(segments) > 1 else "",
-        "location_segments": segments,
+        "location_segments": location_segments,
         "wall": " / ".join(segments[2:]) if len(segments) > 2 else "",
     }
+
+
+def parse_tick_rows(csv_text):
+    first_line = next((line for line in csv_text.splitlines() if line.strip()), "")
+    if not first_line:
+        return []
+    delimiters = (",", "\t", ";")
+    delimiter = max(delimiters, key=lambda candidate: len(next(csv.reader([first_line], delimiter=candidate))))
+    if len(next(csv.reader([first_line], delimiter=delimiter))) < 2:
+        raise ValueError("Could not detect columns in the tick list. Paste a comma- or tab-separated export.")
+    return list(csv.DictReader(io.StringIO(csv_text), delimiter=delimiter))
+
+
+def assign_tick_ids(infos):
+    occurrences = {}
+    for info in infos:
+        if info.get("tick_id"):
+            continue
+        identity = json.dumps(
+            [
+                normalize_url(info.get("mountain_project_url")),
+                info.get("climb_date", ""),
+                info.get("ascent_type", "").casefold(),
+                info.get("personal_note", ""),
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        occurrences[identity] = occurrences.get(identity, 0) + 1
+        digest = hashlib.sha256(f"{identity}:{occurrences[identity]}".encode("utf-8")).hexdigest()
+        info["tick_id"] = f"csv-{digest}"
+    return infos
+
+
+def ascent_record(info):
+    return {
+        "id": info["tick_id"],
+        "date": info.get("climb_date", ""),
+        "ascent_type": info.get("ascent_type", ""),
+        "personal_note": info.get("personal_note", ""),
+    }
+
+
+def read_ascent_history(text, route_url):
+    raw = read_frontmatter_value(text, "ascents")
+    if raw:
+        try:
+            ascents = json.loads(raw)
+        except json.JSONDecodeError as error:
+            raise ValueError("Existing route has invalid ascents front matter.") from error
+        if not isinstance(ascents, list) or any(not isinstance(item, dict) for item in ascents):
+            raise ValueError("Existing route ascents front matter must be a list of records.")
+        return ascents
+
+    climb_date = read_frontmatter_value(text, "climb_date")
+    ascent_type = read_frontmatter_value(text, "ascent_type")
+    personal_note = read_frontmatter_value(text, "personal_note")
+    if not any((climb_date, ascent_type, personal_note)):
+        return []
+    identity = json.dumps([normalize_url(route_url), climb_date, ascent_type.casefold(), personal_note], separators=(",", ":"))
+    return [{
+        "id": "legacy-" + hashlib.sha256(identity.encode("utf-8")).hexdigest(),
+        "date": climb_date,
+        "ascent_type": ascent_type,
+        "personal_note": personal_note,
+    }]
+
+
+def reconcile_legacy_rss_ascents(ascents):
+    normalized = []
+    seen_ids = set()
+    changed = False
+    for ascent in ascents:
+        record = dict(ascent)
+        ascent_id = str(record.get("id", ""))
+        if ascent_id and ascent_id in seen_ids:
+            changed = True
+            continue
+        if ascent_id:
+            seen_ids.add(ascent_id)
+        normalized.append(record)
+
+    removed = set()
+    for legacy_index, legacy in enumerate(normalized):
+        if not str(legacy.get("id", "")).startswith("legacy-"):
+            continue
+        legacy_date = str(legacy.get("date", ""))
+        if not legacy_date:
+            continue
+        legacy_style = str(legacy.get("ascent_type", "")).casefold()
+        for rss_index, rss in enumerate(normalized):
+            if rss_index == legacy_index or rss_index in removed:
+                continue
+            if not str(rss.get("id", "")).startswith("MPObject_") or str(rss.get("date", "")) != legacy_date:
+                continue
+            rss_style = str(rss.get("ascent_type", "")).casefold()
+            if legacy_style and rss_style and legacy_style != rss_style:
+                continue
+            rss["ascent_type"] = rss.get("ascent_type") or legacy.get("ascent_type", "")
+            rss["personal_note"] = legacy.get("personal_note", "")
+            removed.add(legacy_index)
+            changed = True
+            break
+
+    if removed:
+        normalized = [record for index, record in enumerate(normalized) if index not in removed]
+    return normalized, changed
+
+
+def merge_ascent_history(text, incoming, route_url):
+    ascents, changed = reconcile_legacy_rss_ascents(read_ascent_history(text, route_url))
+    seen = {str(item.get("id", "")) for item in ascents if item.get("id")}
+    added = 0
+    for ascent in incoming:
+        if ascent["id"] in seen:
+            existing_index = next(
+                (
+                    index for index, existing in enumerate(ascents)
+                    if str(existing.get("id", "")) == str(ascent["id"])
+                ),
+                None,
+            )
+            if existing_index is not None and not ascents[existing_index].get("ascent_type") and ascent.get("ascent_type"):
+                ascents[existing_index] = {
+                    **ascents[existing_index],
+                    "ascent_type": ascent["ascent_type"],
+                }
+                changed = True
+            continue
+        if str(ascent["id"]).startswith("MPObject_") and ascent.get("date"):
+            matching_legacy = next(
+                (
+                    index for index, existing in enumerate(ascents)
+                    if str(existing.get("id", "")).startswith("legacy-")
+                    and str(existing.get("date", "")) == str(ascent.get("date", ""))
+                    and (
+                        not existing.get("ascent_type")
+                        or not ascent.get("ascent_type")
+                        or str(existing.get("ascent_type", "")).casefold()
+                        == str(ascent.get("ascent_type", "")).casefold()
+                    )
+                ),
+                None,
+            )
+            if matching_legacy is not None:
+                legacy = ascents[matching_legacy]
+                ascent = dict(ascent)
+                ascent["ascent_type"] = ascent.get("ascent_type") or legacy.get("ascent_type", "")
+                ascent["personal_note"] = legacy.get("personal_note", "")
+                ascents[matching_legacy] = ascent
+                seen.add(ascent["id"])
+                changed = True
+                continue
+        ascents.append(ascent)
+        seen.add(ascent["id"])
+        added += 1
+        changed = True
+
+    if not changed:
+        return text, 0, False
+
+    def sort_key(item):
+        return (str(item.get("date", "")), str(item.get("id", "")))
+
+    latest = max(ascents, key=sort_key) if ascents else {}
+    replacements = {
+        "climb_date": json.dumps(str(latest.get("date", ""))),
+        "ascent_type": json.dumps(str(latest.get("ascent_type", ""))),
+        "personal_note": json.dumps(str(latest.get("personal_note", ""))),
+        "ascents": json.dumps(ascents, ensure_ascii=False, separators=(",", ":")),
+        "draft": "true" if ascents and all(is_unsent_ascent(item.get("ascent_type")) for item in ascents) else "false",
+    }
+    for name, value in replacements.items():
+        pattern = re.compile(rf"(?m)^{re.escape(name)}:\s*.*$")
+        line = f"{name}: {value}"
+        if pattern.search(text):
+            text = pattern.sub(lambda _: line, text, count=1)
+        else:
+            insert_before = re.search(r"(?m)^tags:\s*$", text)
+            if insert_before:
+                text = text[:insert_before.start()] + line + "\n" + text[insert_before.start():]
+            else:
+                closing = text.find("\n---", text.find("---") + 3)
+                if closing < 0:
+                    raise ValueError("Existing route has malformed front matter.")
+                text = text[:closing] + "\n" + line + text[closing:]
+    return text, added, changed
 
 
 def fetch_route_coordinates(url):
@@ -302,13 +519,274 @@ def fetch_route_breadcrumb(url):
     """Return Mountain Project's ordered area breadcrumb for a route page."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=10) as response:
-        html = response.read().decode("utf-8", errors="ignore")
+        page_html = response.read().decode("utf-8", errors="ignore")
     crumbs = []
-    for label in re.findall(r'href="/area/[^\"]+"[^>]*>(.*?)</a>', html, re.DOTALL):
-        name = clean_location_name(re.sub(r"<[^>]+>", "", label))
-        if name and name not in crumbs:
+    pattern = r'''<a\s+href=["']((?:https?://(?:www\.)?mountainproject\.com)?/area/[^"']+)["'][^>]*>(.*?)</a>'''
+    locations = read_locations()
+    for area_url, label in re.findall(pattern, page_html, re.DOTALL | re.IGNORECASE):
+        raw_label = re.sub(r"<[^>]+>", "", label)
+        name = clean_location_name(html_lib.unescape(raw_label))
+        if re.search(r"(?:&hellip;|&#8230;|…|\.\.\.)", raw_label, re.IGNORECASE):
+            area_slug = urlparse(area_url).path.rstrip("/").rsplit("/", 1)[-1]
+            registered_name = next(
+                (area["name"] for area in locations if slugify(area["name"]) == area_slug),
+                "",
+            )
+            name = registered_name or name
+        if name and name.casefold() != "all locations" and name not in crumbs:
             crumbs.append(name)
     return crumbs
+
+
+TICK_CSV_HEADERS = [
+    "Date", "Route", "Rating", "Notes", "URL", "Pitches", "Location",
+    "Avg Stars", "Your Stars", "Style", "Lead Style", "Route Type",
+    "Your Rating", "Length", "Rating Code", "Import Source", "Tick ID",
+]
+
+
+class MountainProjectTickPageParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tables = []
+        self.current_table = None
+        self.current_row = None
+        self.reading_ascent = False
+        self.max_page = 1
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag == "table":
+            classes = set(attributes.get("class", "").split())
+            if "route-table" in classes:
+                self.current_table = {
+                    "preferred": "hidden-sm-up" in classes,
+                    "rows": [],
+                }
+                self.tables.append(self.current_table)
+        elif tag == "tr" and self.current_table:
+            classes = set(attributes.get("class", "").split())
+            if "route-row" in classes:
+                self.current_row = {"url": "", "ascent_text": ""}
+        elif tag == "a":
+            href = attributes.get("href", "")
+            parsed_href = urlparse(href)
+            if parsed_href.path.rstrip("/").endswith("/ticks"):
+                page_values = parse_qs(parsed_href.query).get("page", [])
+                for page_value in page_values:
+                    if page_value.isdigit():
+                        self.max_page = max(self.max_page, int(page_value))
+            if self.current_row and href:
+                absolute_url = urljoin("https://www.mountainproject.com", href)
+                if re.match(r"^https://(?:www\.)?mountainproject\.com/route/\d+/", absolute_url):
+                    self.current_row["url"] = absolute_url
+        elif tag == "i" and self.current_row:
+            self.reading_ascent = True
+
+    def handle_data(self, data):
+        if self.reading_ascent and self.current_row:
+            self.current_row["ascent_text"] += data
+
+    def handle_endtag(self, tag):
+        if tag == "i":
+            self.reading_ascent = False
+        elif tag == "tr" and self.current_row:
+            date_text, separator, style_text = self.current_row["ascent_text"].partition("·")
+            climb_date = parse_climb_date(date_text.strip()) if separator else ""
+            style_text = re.split(r"\.\s", style_text.strip(), maxsplit=1)[0].rstrip(". ")
+            ascent_type = style_text.rsplit("/", 1)[-1].strip()
+            if ascent_type.casefold() in {"lead", "tr", "top rope", "boulder", "aid"}:
+                ascent_type = ""
+            if self.current_row["url"] and climb_date:
+                self.current_table["rows"].append({
+                    "url": normalize_url(self.current_row["url"]),
+                    "date": climb_date,
+                    "ascent_type": ascent_type,
+                })
+            self.current_row = None
+        elif tag == "table" and self.current_table:
+            self.current_table = None
+
+    def tick_rows(self):
+        preferred = next((table["rows"] for table in self.tables if table["preferred"]), None)
+        if preferred is not None:
+            return preferred
+        return next((table["rows"] for table in self.tables if table["rows"]), [])
+
+
+def fetch_public_tick_history(user_id, oldest_date):
+    profile_request = urllib.request.Request(
+        f"https://www.mountainproject.com/user/{user_id}",
+        headers={"User-Agent": USER_AGENT},
+    )
+    with urllib.request.urlopen(profile_request, timeout=20) as response:
+        profile_url = response.geturl().rstrip("/")
+
+    profile_parts = urlparse(profile_url)
+    if (
+        profile_parts.hostname not in {"www.mountainproject.com", "mountainproject.com"}
+        or not re.fullmatch(rf"/user/{re.escape(user_id)}(?:/[^/]+)?", profile_parts.path)
+    ):
+        raise ValueError("Mountain Project did not resolve the RSS user to a public profile.")
+
+    ticks_url = profile_url + "/ticks"
+    max_pages = 1
+    ticks = []
+    page = 1
+    while page <= 20:
+        page_url = ticks_url if page == 1 else f"{ticks_url}?page={page}"
+        request = urllib.request.Request(page_url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=20) as response:
+            page_html = response.read().decode("utf-8", errors="ignore")
+
+        parser = MountainProjectTickPageParser()
+        parser.feed(page_html)
+        page_ticks = parser.tick_rows()
+        max_pages = max(max_pages, parser.max_page)
+        if page == 1 and not page_ticks:
+            raise ValueError("Mountain Project's public tick list contained no readable tick rows.")
+        ticks.extend(page_ticks)
+        if any(tick["date"] < oldest_date for tick in page_ticks):
+            break
+        if page >= max_pages:
+            break
+        page += 1
+        time.sleep(0.2)
+    return ticks, max_pages
+
+
+def apply_public_tick_styles(rows, tick_targets, public_ticks, warnings):
+    rss_by_route_date = {}
+    for row_index, route_url, climb_date in tick_targets:
+        key = (route_url, climb_date)
+        rss_by_route_date.setdefault(key, []).append(row_index)
+
+    public_by_route_date = {}
+    for tick in public_ticks:
+        key = (tick["url"], tick["date"])
+        public_by_route_date.setdefault(key, []).append(tick)
+
+    unmatched = 0
+    for key, row_indices in rss_by_route_date.items():
+        matching_ticks = public_by_route_date.get(key, [])
+        if len(matching_ticks) != len(row_indices):
+            unmatched += len(row_indices)
+            continue
+        for row_index, tick in zip(row_indices, matching_ticks):
+            if tick["ascent_type"]:
+                rows[row_index][10] = tick["ascent_type"]
+            else:
+                unmatched += 1
+
+    if unmatched:
+        warnings.append(
+            f"Could not uniquely match public tick-list styles for {unmatched} RSS tick(s); those styles remain blank."
+        )
+
+
+def build_rss_tick_csv(feed_url):
+    parsed_url = urlparse(str(feed_url or "").strip())
+    if (
+        parsed_url.scheme != "https"
+        or parsed_url.hostname not in {"www.mountainproject.com", "mountainproject.com"}
+        or not re.fullmatch(r"/rss/user-ticks/\d+/?", parsed_url.path)
+    ):
+        raise ValueError("Use a Mountain Project user tick feed URL, such as https://www.mountainproject.com/rss/user-ticks/123456789.")
+
+    request = urllib.request.Request(parsed_url.geturl(), headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            root = ET.fromstring(response.read())
+    except (urllib.error.URLError, OSError, TimeoutError, ET.ParseError) as error:
+        raise RuntimeError(f"Could not read the Mountain Project RSS feed: {error}") from error
+    channel = root.find("channel")
+    items = channel.findall("item") if channel is not None else []
+    if not items:
+        raise ValueError("The RSS feed contains no tick entries.")
+    if len(items) > 100:
+        raise ValueError("The RSS feed contains more than 100 entries; refusing an unexpectedly large import.")
+
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(TICK_CSV_HEADERS)
+    warnings = []
+    breadcrumb_cache = {}
+    seen_tick_ids = set()
+    rss_rows = []
+    tick_targets = []
+    count = 0
+    for item in items:
+        title = html_lib.unescape(item.findtext("title", default="")).strip()
+        route_url = item.findtext("link", default="").strip()
+        route_url_parts = urlparse(route_url)
+        if (
+            route_url_parts.scheme != "https"
+            or route_url_parts.hostname not in {"www.mountainproject.com", "mountainproject.com"}
+            or not re.match(r"^/route/\d+/", route_url_parts.path)
+        ):
+            warnings.append(f"Skipped an RSS item with an invalid route link: {title or '(untitled)'}")
+            continue
+        normalized_url = normalize_url(route_url)
+        tick_id = item.findtext("guid", default="").strip()
+        if not tick_id:
+            tick_id = "rss-" + hashlib.sha256(
+                f"{normalized_url}|{item.findtext('pubDate', default='')}|{title}".encode("utf-8")
+            ).hexdigest()
+        if tick_id in seen_tick_ids:
+            continue
+        seen_tick_ids.add(tick_id)
+        count += 1
+
+        route_title = re.sub(r"^Tick:\s*", "", title, flags=re.IGNORECASE)
+        grade = ""
+        grade_match = re.search(r"\(([^()]*)\)\s*$", route_title)
+        if grade_match:
+            grade = grade_match.group(1).strip()
+            route_title = route_title[:grade_match.start()].strip()
+
+        pub_date = item.findtext("pubDate", default="").strip()
+        try:
+            climb_date = parsedate_to_datetime(pub_date).date().isoformat()
+        except (TypeError, ValueError, OverflowError):
+            climb_date = ""
+            warnings.append(f"Could not read the RSS date for {route_title or route_url}.")
+
+        if normalized_url not in breadcrumb_cache:
+            try:
+                breadcrumb_cache[normalized_url] = fetch_route_breadcrumb(route_url)
+            except (urllib.error.URLError, OSError, TimeoutError) as error:
+                breadcrumb_cache[normalized_url] = []
+                warnings.append(f"Could not fetch location details for {route_title or route_url}: {error}")
+            time.sleep(0.2)
+        location = " > ".join(breadcrumb_cache[normalized_url])
+        route_type = "Boulder" if grade.upper().startswith("V") or re.fullmatch(r"[3-9][abc][+-]?", grade, re.IGNORECASE) else "Sport"
+        row_index = len(rss_rows)
+        rss_rows.append([
+            climb_date, route_title, grade, "", route_url, "1", location,
+            "", "", "", "", route_type, "", "", "", "RSS", tick_id,
+        ])
+        if climb_date:
+            tick_targets.append((row_index, normalized_url, climb_date))
+
+    if tick_targets:
+        try:
+            public_ticks, max_pages = fetch_public_tick_history(
+                re.fullmatch(r"/rss/user-ticks/(\d+)/?", parsed_url.path).group(1),
+                min(target[2] for target in tick_targets),
+            )
+        except (urllib.error.URLError, OSError, TimeoutError, ValueError) as error:
+            warnings.append(f"Could not retrieve public Mountain Project tick styles: {error}")
+        else:
+            apply_public_tick_styles(rss_rows, tick_targets, public_ticks, warnings)
+            if max_pages > 20 and not any(
+                tick["date"] < min(target[2] for target in tick_targets)
+                for tick in public_ticks
+            ):
+                warnings.append("Stopped public tick-list lookup after 20 pages; older RSS styles may remain blank.")
+
+    writer.writerows(rss_rows)
+
+    return {"csv": output.getvalue(), "count": count, "warnings": warnings}
 
 
 def read_frontmatter_value(text, name):
@@ -679,7 +1157,11 @@ def build_route_markdown(fields):
         return json.dumps(str(value or ""))
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-    draft = "true" if is_unsent_ascent(fields.get("ascent_type")) else "false"
+    ascents = fields.get("ascents") or ([ascent_record(fields)] if fields.get("tick_id") else [])
+    draft = "true" if (
+        all(is_unsent_ascent(item.get("ascent_type")) for item in ascents)
+        if ascents else is_unsent_ascent(fields.get("ascent_type"))
+    ) else "false"
     lines = [
         "---",
         f'title: {q(fields.get("title"))}',
@@ -696,6 +1178,7 @@ def build_route_markdown(fields):
         'thumbnail: ""',
         "photos: []",
         f'personal_note: {q(fields.get("personal_note"))}',
+        *([f"ascents: {json.dumps(ascents, ensure_ascii=False, separators=(',', ':'))}"] if ascents else []),
         "tags:",
         '  - "Climbing"',
         f"draft: {draft}",
@@ -729,10 +1212,14 @@ class Handler(SimpleHTTPRequestHandler):
             self.handle_indoor("preview")
         elif self.path == "/api/climbing/save-indoor":
             self.handle_indoor("save")
+        elif self.path == "/api/climbing/gyms":
+            self.handle_add_gym()
         elif self.path == "/api/climbing/preview-ticks":
             self.handle_preview_ticks()
         elif self.path == "/api/climbing/import-ticks":
             self.handle_import_ticks()
+        elif self.path == "/api/climbing/tick-rss":
+            self.handle_tick_rss()
         elif self.path == "/api/climbing/rebuild-locations":
             self.handle_rebuild_locations()
         elif self.path == "/api/climbing/relocate-routes":
@@ -825,6 +1312,18 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError, OSError, RuntimeError) as error:
             self.send_json(400, {"error": str(error)})
 
+    def handle_add_gym(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length))
+            result = indoor_import.add_gym(payload)
+            build_site()
+            self.send_json(200, result)
+        except FileExistsError as error:
+            self.send_json(409, {"error": str(error)})
+        except (ValueError, json.JSONDecodeError, OSError, RuntimeError) as error:
+            self.send_json(400, {"error": str(error)})
+
     def handle_relocate_routes(self):
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -886,7 +1385,6 @@ class Handler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length))
             csv_text = payload.get("csv", "")
-            overwrite = bool(payload.get("overwrite"))
             fetch_gps = payload.get("fetch_gps", True)
             if not isinstance(csv_text, str) or not csv_text.strip():
                 raise ValueError("Paste the exported tick list CSV first.")
@@ -902,7 +1400,7 @@ class Handler(SimpleHTTPRequestHandler):
                 if location and crag:
                     overrides[str(key)] = {"location": location, "crag": crag}
             locations = read_locations()
-            infos = [parse_tick_row(row) for row in csv.DictReader(io.StringIO(csv_text))]
+            infos = assign_tick_ids([parse_tick_row(row) for row in parse_tick_rows(csv_text)])
             route_hierarchies = known_route_hierarchies()
             resolved = [resolve_tick_hierarchy(info, overrides, locations, route_hierarchies) for info in infos]
             unresolved = [item for item in resolved if item["status"] == "unresolved"]
@@ -912,30 +1410,114 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             if resolutions:
                 write_import_overrides(overrides)
-            known_urls = existing_route_urls()
-            created, skipped, errors = [], [], []
+            existing_routes = existing_route_files_by_url()
+            created, updated, skipped, errors = [], [], [], []
+            warnings = []
+            valid_infos = []
             for info, hierarchy in zip(infos, resolved):
                 info["location"] = hierarchy["location"]
                 info["crag"] = hierarchy["crag"]
                 info["state"] = info.get("state") or state_for_location(info["location"], locations)
-                if not any(
-                    entry.get("level") == "crag"
-                    and entry["name"].casefold() == info["crag"].casefold()
-                    and entry.get("parent", "").casefold() == info["location"].casefold()
-                    for entry in locations
-                ):
-                    errors.append(f'{info["title"]}: create and verify "{info["location"]} / {info["crag"]}" in the hierarchy editor first')
-                    continue
                 if not info["title"] or not info["mountain_project_url"]:
                     continue
+                parent = next(
+                    (
+                        entry for entry in locations
+                        if entry.get("level") == "location"
+                        and entry["name"].casefold() == info["location"].casefold()
+                    ),
+                    None,
+                )
+                if not parent:
+                    errors.append(f'{info["title"]}: "{info["location"]}" is not a registered location; verify its hierarchy first')
+                    continue
+                named_node = next(
+                    (entry for entry in locations if entry["name"].casefold() == info["crag"].casefold()),
+                    None,
+                )
+                if named_node and (
+                    named_node.get("level") != "crag"
+                    or named_node.get("parent", "").casefold() != info["location"].casefold()
+                ):
+                    errors.append(f'{info["title"]}: "{info["crag"]}" is already registered under a different hierarchy')
+                    continue
+                valid_infos.append(info)
+            grouped = {}
+            for info in valid_infos:
+                grouped.setdefault(normalize_url(info["mountain_project_url"]), []).append(info)
+
+            for normalized_url, route_ticks in grouped.items():
+                info = route_ticks[0]
+                incoming = []
+                incoming_ids = set()
+                for tick in route_ticks:
+                    ascent = ascent_record(tick)
+                    if ascent["id"] not in incoming_ids:
+                        incoming.append(ascent)
+                        incoming_ids.add(ascent["id"])
                 try:
-                    normalized_url = normalize_url(info["mountain_project_url"])
+                    parent = next(
+                        entry for entry in locations
+                        if entry.get("level") == "location"
+                        and entry["name"].casefold() == info["location"].casefold()
+                    )
+                    registered_crag = next(
+                        (
+                            entry for entry in locations
+                            if entry.get("level") == "crag"
+                            and entry["name"].casefold() == info["crag"].casefold()
+                            and entry.get("parent", "").casefold() == info["location"].casefold()
+                        ),
+                        None,
+                    )
+                    coordinates = None
+                    if not registered_crag:
+                        coordinates = fetch_route_coordinates(info["mountain_project_url"]) if fetch_gps else None
+                        approximate = not coordinates
+                        if approximate:
+                            coordinates = {
+                                "latitude": parent.get("latitude", ""),
+                                "longitude": parent.get("longitude", ""),
+                            }
+                        if not coordinates["latitude"] or not coordinates["longitude"]:
+                            raise ValueError(f'Cannot register "{info["crag"]}" without coordinates for its parent location.')
+                        if not add_registry_entry(info["crag"], info["location"], coordinates):
+                            raise ValueError(f'Could not register new crag "{info["crag"]}" under "{info["location"]}".')
+                        locations.append({
+                            "name": info["crag"],
+                            "parent": info["location"],
+                            "latitude": str(coordinates["latitude"]),
+                            "longitude": str(coordinates["longitude"]),
+                            "level": "crag",
+                        })
+                        warnings.append(
+                            f'Added "{info["crag"]}" under "{info["location"]}"'
+                            + (" using the parent location's approximate coordinates." if approximate else ".")
+                        )
+
+                    target = existing_routes.get(normalized_url)
+                    if target:
+                        text = target.read_text(encoding="utf-8")
+                        merged, added, changed = merge_ascent_history(text, incoming, normalized_url)
+                        if changed:
+                            target.write_text(merged, encoding="utf-8", newline="\n")
+                            updated.append({"title": info["title"], "ticks_added": added})
+                        else:
+                            skipped.append(info["title"])
+                        continue
+
                     filename = normalize_filename(slugify(info["title"]))
                     target = CONTENT / filename
-                    if not overwrite and (normalized_url in known_urls or target.exists()):
+                    if target.exists():
                         skipped.append(info["title"])
                         continue
-                    coordinates = fetch_route_coordinates(info["mountain_project_url"]) if fetch_gps else None
+                    info["ascents"] = incoming
+                    latest = max(incoming, key=lambda item: (str(item.get("date", "")), str(item.get("id", ""))))
+                    info.update({
+                        "climb_date": latest.get("date", ""),
+                        "ascent_type": latest.get("ascent_type", ""),
+                        "personal_note": latest.get("personal_note", ""),
+                    })
                     if coordinates and info.get("state"):
                         ensure_state(info["state"], coordinates)
                     if coordinates and info["location"]:
@@ -943,15 +1525,15 @@ class Handler(SimpleHTTPRequestHandler):
                     if coordinates and info["crag"]:
                         add_registry_entry(info["crag"], info["location"], coordinates)
                     target.write_text(build_route_markdown(info), encoding="utf-8", newline="\n")
-                    known_urls.add(normalized_url)
+                    existing_routes[normalized_url] = target
                     created.append(filename)
                     if fetch_gps:
                         time.sleep(0.4)
                 except (OSError, ValueError) as error:
                     errors.append(f'{info["title"]}: {error}')
-            if created:
+            if created or updated or warnings:
                 build_site()
-            self.send_json(200, {"created": created, "skipped": skipped, "errors": errors})
+            self.send_json(200, {"created": created, "updated": updated, "skipped": skipped, "errors": errors, "warnings": warnings})
         except (ValueError, json.JSONDecodeError, RuntimeError) as error:
             self.send_json(400, {"error": str(error)})
 
@@ -964,13 +1546,22 @@ class Handler(SimpleHTTPRequestHandler):
                 raise ValueError("Paste the exported tick list CSV first.")
             locations = read_locations()
             route_hierarchies = known_route_hierarchies()
-            resolutions = [resolve_tick_hierarchy(info, read_import_overrides(), locations, route_hierarchies) for info in (parse_tick_row(row) for row in csv.DictReader(io.StringIO(csv_text)))]
+            resolutions = [resolve_tick_hierarchy(info, read_import_overrides(), locations, route_hierarchies) for info in (parse_tick_row(row) for row in parse_tick_rows(csv_text))]
             unresolved = {}
             for resolution in resolutions:
                 if resolution["status"] == "unresolved":
                     unresolved.setdefault(resolution["key"], resolution | {"routes": 0})["routes"] += 1
             self.send_json(200, {"matched": sum(item["status"] != "unresolved" for item in resolutions), "unresolved": list(unresolved.values())})
         except (ValueError, json.JSONDecodeError) as error:
+            self.send_json(400, {"error": str(error)})
+
+    def handle_tick_rss(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length))
+            result = build_rss_tick_csv(payload.get("url", ""))
+            self.send_json(200, result)
+        except (ValueError, json.JSONDecodeError, RuntimeError) as error:
             self.send_json(400, {"error": str(error)})
 
     def handle_rebuild_locations(self):
@@ -1018,4 +1609,3 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(200, crag_usage(name))
             return
         super().do_GET()
-

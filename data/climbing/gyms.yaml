@@ -10,3 +10,23 @@
   city: "Columbus"
   state: "Ohio"
   url: "https://5.life/bg/"
+
+- name: "Chambers"
+  city: "Columbus"
+  state: "Ohio"
+  url: "https://5.life/chambers/"
+
+- name: "Vertical Adventures"
+  city: "Columbus"
+  state: "Ohio"
+  url: "https://5.life/va/"
+
+- name: "Rising Up Rock Gym"
+  city: "Medina"
+  state: "Ohio"
+  url: "https://www.risinguprockgym.com/"
+
+- name: "The Notch"
+  city: "Lebanon"
+  state: "New Hampshire"
+  url: "https://www.thenotchclimbing.com/"

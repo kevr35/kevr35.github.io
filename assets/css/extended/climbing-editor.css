@@ -126,6 +126,20 @@
   background: var(--code-bg);
 }
 
+.climbing-editor__add-gym {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--code-bg);
+}
+
+.climbing-editor__add-gym p {
+  margin-top: 0;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
 .climbing-editor__next-steps {
   border-left: 4px solid var(--primary);
   background: var(--code-bg);

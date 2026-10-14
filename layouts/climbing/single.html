@@ -1,12 +1,13 @@
 {{- define "main" -}}
 {{- $routePage := . -}}
+{{- $climbingURL := "climbing/" | relLangURL -}}
 {{- $indoorTitle := partial "indoor-title.html" . -}}
 {{- if eq (lower (.Params.setting | default "")) "indoor" -}}
 {{- $gym := index (where (site.Data.climbing.gyms | default slice) "name" .Params.gym) 0 -}}
 {{- $board := index (where (site.Data.climbing.boards | default slice) "name" .Params.board) 0 -}}
 <article class="post-single climbing-route climbing-route--indoor">
   <header class="post-header">
-    {{ partial "back-button.html" (dict "url" ("climbing/" | relLangURL) "label" "Back to Climbing Log") }}
+    {{ partial "back-button.html" (dict "url" $climbingURL "label" "Back to Climbing Log") }}
     <h1>{{ $indoorTitle }}</h1>
     {{ with .Description }}<div class="post-description">{{ . }}</div>{{ end }}
     <div class="climbing-route__facts">
@@ -50,7 +51,7 @@
 {{- else -}}
 <article class="post-single climbing-route">
   <header class="post-header">
-    {{ partial "back-button.html" (dict "url" .Parent.RelPermalink "label" "Back to Climbing Log") }}
+    {{ partial "back-button.html" (dict "url" $climbingURL "label" "Back to Climbing Log") }}
     <h1>{{ .Title }}</h1>
     {{ with .Description }}<div class="post-description">{{ . }}</div>{{ end }}
     <div class="climbing-route__facts">
@@ -58,9 +59,9 @@
       {{ $crag := index (where site.Data.climbing.locations "name" $routePage.Params.crag) 0 }}
       {{ $location := index (where site.Data.climbing.locations "name" $crag.parent) 0 }}
       {{ with $location.parent }}<span><b>State</b>{{ . }}</span>{{ end }}
-      {{ with $crag.parent }}<span><b>Location</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" . | safeURL }}">{{ . }}</a></span>{{ end }}
-      {{ with $routePage.Params.crag }}<span><b>Crag</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" . | safeURL }}">{{ . }}</a></span>{{ end }}
-      {{ with $routePage.Params.wall }}<span><b>Wall</b><a href="{{ $routePage.Parent.RelPermalink }}?{{ querify "location" $crag.parent "crag" $routePage.Params.crag "wall" . | safeURL }}">{{ . }}</a></span>{{ end }}
+      {{ with $crag.parent }}<span><b>Location</b><a href="{{ $climbingURL }}?{{ querify "location" . | safeURL }}">{{ . }}</a></span>{{ end }}
+      {{ with $routePage.Params.crag }}<span><b>Crag</b><a href="{{ $climbingURL }}?{{ querify "location" $crag.parent "crag" . | safeURL }}">{{ . }}</a></span>{{ end }}
+      {{ with $routePage.Params.wall }}<span><b>Wall</b><a href="{{ $climbingURL }}?{{ querify "location" $crag.parent "crag" $routePage.Params.crag "wall" . | safeURL }}">{{ . }}</a></span>{{ end }}
       {{ with .Params.discipline }}<span><b>Discipline</b>{{ . }}</span>{{ end }}
       {{ with .Params.setting }}<span><b>Setting</b>{{ . }}</span>{{ end }}
       {{ with .Params.climb_date }}<span><b>Climbed</b>{{ time.Format "January 2, 2006" . }}</span>{{ end }}
@@ -83,11 +84,28 @@
   </div>
   {{ end }}
 
+  {{ with .Params.ascents }}
+  <section class="climbing-note climbing-ascent-history">
+    <h2>Ascent history</h2>
+    <ul>
+      {{ range sort . "date" "asc" }}
+      <li>
+        {{ with .date }}{{ time.Format "January 2, 2006" . }}{{ else }}Date not recorded{{ end }}
+        {{ with .ascent_type }} · {{ . }}{{ end }}
+        {{ with .personal_note }}<p>{{ . | markdownify }}</p>{{ end }}
+      </li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  {{ if not .Params.ascents }}
   {{ with .Params.personal_note }}
   <aside class="climbing-note">
     <h2>Personal note</h2>
     <p>{{ . | markdownify }}</p>
   </aside>
+  {{ end }}
   {{ end }}
 
   {{ with .Params.mountain_project_url }}

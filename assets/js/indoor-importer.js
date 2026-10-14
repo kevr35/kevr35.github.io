@@ -6,6 +6,12 @@
   const status = root.querySelector("[data-indoor-status]");
   const filename = root.querySelector("[data-indoor-filename]");
   const overwrite = root.querySelector("[data-indoor-overwrite]");
+  const gymPanel = root.querySelector("[data-indoor-gym-panel]");
+  const gymName = root.querySelector("[data-indoor-new-gym-name]");
+  const gymCity = root.querySelector("[data-indoor-new-gym-city]");
+  const gymState = root.querySelector("[data-indoor-new-gym-state]");
+  const gymUrl = root.querySelector("[data-indoor-new-gym-url]");
+  const addGymButton = root.querySelector("[data-indoor-gym-add]");
   const fields = Object.fromEntries([...root.querySelectorAll("[data-indoor-field]")].map((el) => [el.dataset.indoorField, el]));
   let youtubeUrl = "";
   let instagramUrl = "";
@@ -22,6 +28,47 @@
     if (value && !names.includes(value)) select.append(new Option(`${value} (not in registry)`, value));
     select.value = value || "";
   };
+
+  root.querySelector("[data-indoor-gym-toggle]").addEventListener("click", () => {
+    gymPanel.hidden = !gymPanel.hidden;
+    if (!gymPanel.hidden) gymName.focus();
+  });
+
+  root.querySelector("[data-indoor-gym-cancel]").addEventListener("click", () => {
+    gymPanel.hidden = true;
+  });
+
+  addGymButton.addEventListener("click", async () => {
+    const name = gymName.value.trim();
+    if (!name) {
+      status.textContent = "Enter a gym name before adding it.";
+      gymName.focus();
+      return;
+    }
+
+    addGymButton.disabled = true;
+    status.textContent = "Adding gym to the shared list...";
+    try {
+      const data = await post("/api/climbing/gyms", {
+        name,
+        city: gymCity.value.trim(),
+        state: gymState.value.trim(),
+        url: gymUrl.value.trim(),
+      });
+      fillSelect(fields.gym, data.gyms, data.gym);
+      fields.board.value = "";
+      gymPanel.hidden = true;
+      gymName.value = "";
+      gymCity.value = "";
+      gymState.value = "";
+      gymUrl.value = "";
+      status.textContent = `Added ${data.gym} to gyms.yaml and selected it.`;
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      addGymButton.disabled = false;
+    }
+  });
 
   root.querySelector("[data-indoor-fetch]").addEventListener("click", async () => {
     status.textContent = "Fetching video details...";

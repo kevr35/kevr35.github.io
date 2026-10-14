@@ -45,7 +45,72 @@ def fetch(url, accept_json=False):
 def registry_names(path):
     if not path.exists():
         return []
-    return re.findall(r'(?m)^- name:\s*"?([^"\r\n]+?)"?\s*$', path.read_text(encoding="utf-8"))
+    names = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        match = re.match(r"^\s*-\s+name:\s*(.*)$", line)
+        if not match:
+            continue
+        raw_name = match.group(1).strip()
+        if raw_name.startswith('"'):
+            try:
+                name, end = json.JSONDecoder().raw_decode(raw_name)
+            except json.JSONDecodeError as error:
+                raise ValueError(f"Invalid quoted name in {path.name} on line {line_number}.") from error
+            trailing = raw_name[end:].strip()
+            if trailing and not trailing.startswith("#"):
+                raise ValueError(f"Invalid name entry in {path.name} on line {line_number}.")
+        elif raw_name.startswith("'"):
+            single_quoted = re.fullmatch(r"'((?:[^']|'')*)'\s*(?:#.*)?", raw_name)
+            if not single_quoted:
+                raise ValueError(f"Invalid quoted name in {path.name} on line {line_number}.")
+            name = single_quoted.group(1).replace("''", "'")
+        else:
+            name = re.split(r"\s+#", raw_name, maxsplit=1)[0].strip()
+        if not name:
+            raise ValueError(f"Missing name in {path.name} on line {line_number}.")
+        names.append(name)
+    return names
+
+
+def add_gym(payload):
+    if not isinstance(payload, dict):
+        raise ValueError("Gym details must be an object.")
+
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        raise ValueError("Enter a gym name.")
+
+    values = {
+        key: str(payload.get(key, "") or "").strip()
+        for key in ("city", "state", "url")
+    }
+    if any(any(ord(character) < 32 for character in value) for value in (name, *values.values())):
+        raise ValueError("Gym details cannot contain line breaks or control characters.")
+
+    existing = registry_names(GYMS)
+    if any(current.casefold() == name.casefold() for current in existing):
+        raise FileExistsError(f'Gym "{name}" is already in gyms.yaml.')
+
+    if values["url"]:
+        parsed_url = urllib.parse.urlparse(values["url"])
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise ValueError("Gym website must be an HTTP or HTTPS URL.")
+
+    def quote(value):
+        return json.dumps(value, ensure_ascii=False)
+
+    lines = [f"- name: {quote(name)}"]
+    lines.extend(f"  {key}: {quote(value)}" for key, value in values.items() if value)
+    entry = "\n".join(lines)
+
+    existing_text = GYMS.read_text(encoding="utf-8") if GYMS.exists() else ""
+    if existing_text and not existing_text.endswith("\n\n"):
+        separator = "\n" if existing_text.endswith("\n") else "\n\n"
+    else:
+        separator = ""
+    GYMS.parent.mkdir(parents=True, exist_ok=True)
+    GYMS.write_text(existing_text + separator + entry + "\n", encoding="utf-8", newline="\n")
+    return {"gym": name, "gyms": registry_names(GYMS)}
 
 
 def youtube_id(url):
@@ -212,8 +277,8 @@ def problems(fields):
     if not fields.get("grade"):
         issues.append("no grade detected")
     if not fields.get("board") and not fields.get("gym"):
-        issues.append("no gym or board detected (add the gym to data/climbing/gyms.yaml or pass --gym)")
-    if fields.get("gym") and fields["gym"] not in registry_names(GYMS):
+        issues.append("no registered gym or board detected (select a gym or add it to data/climbing/gyms.yaml)")
+    if fields.get("gym") and fields["gym"].casefold() not in {name.casefold() for name in registry_names(GYMS)}:
         issues.append(f'gym "{fields["gym"]}" is not in data/climbing/gyms.yaml')
     if fields.get("board") and fields["board"] not in registry_names(BOARDS):
         issues.append(f'board "{fields["board"]}" is not in data/climbing/boards.yaml')
@@ -231,6 +296,15 @@ def preview_indoor(payload):
 
 def save_indoor(payload):
     fields = payload.get("fields") or {}
+    if fields.get("gym") and not fields.get("board"):
+        registered_gym = next(
+            (name for name in registry_names(GYMS) if name.casefold() == str(fields["gym"]).strip().casefold()),
+            None,
+        )
+        if not registered_gym:
+            raise ValueError(f'Gym "{fields["gym"]}" is not in gyms.yaml. Add it to the gym list before saving.')
+        fields["gym"] = registered_gym
+
     filename = re.sub(r"\.md$", "", str(payload.get("filename", "")).strip())
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", filename):
         raise ValueError("Filename must contain only letters, numbers, hyphens, or underscores.")

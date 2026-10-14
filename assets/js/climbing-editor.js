@@ -114,12 +114,40 @@
   const importResolvedTicks = async (csv, resolutions, button, tickStatus, panel) => {
     button.disabled = true;
     try {
-      const response = await fetch("/api/climbing/import-ticks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ csv, resolutions, overwrite: root.querySelector("[data-tick-overwrite]").checked, fetch_gps: root.querySelector("[data-tick-fetch-gps]").checked }) });
+      const response = await fetch("/api/climbing/import-ticks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ csv, resolutions, fetch_gps: root.querySelector("[data-tick-fetch-gps]").checked }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.error || "The local server rejected the tick list.");
-      tickStatus.textContent = `${result.created.length} route${result.created.length === 1 ? "" : "s"} created, ${result.skipped.length} skipped, ${result.errors.length} failed.`; panel.hidden = true;
+      const updatedCount = result.updated.reduce((sum, route) => sum + route.ticks_added, 0);
+      const warningText = result.warnings.length ? ` ${result.warnings.join(" ")}` : "";
+      tickStatus.textContent = `${result.created.length} route${result.created.length === 1 ? "" : "s"} created, ${result.updated.length} existing route${result.updated.length === 1 ? "" : "s"} updated with ${updatedCount} new tick${updatedCount === 1 ? "" : "s"}, ${result.skipped.length} duplicate or conflicting route${result.skipped.length === 1 ? "" : "s"} skipped, ${result.errors.length} failed.${warningText}`;
+      panel.hidden = true;
     } catch (error) { tickStatus.textContent = `Could not import the tick list: ${error.message}`; }
     finally { button.disabled = false; }
   };
+  const rssPanel = root.querySelector("[data-tick-rss-import]");
+  const rssButton = root.querySelector("[data-fetch-tick-rss]");
+  rssButton.addEventListener("click", async () => {
+    const csvInput = root.querySelector("[data-tick-csv]");
+    const rssStatus = root.querySelector("[data-tick-rss-status]");
+    if (csvInput.value.trim() && !window.confirm("Replace the current tick list with the RSS feed entries?")) return;
+    rssButton.disabled = true;
+    rssStatus.textContent = "Fetching the RSS feed and route area details...";
+    try {
+      const response = await fetch("/api/climbing/tick-rss", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: root.querySelector("[data-tick-rss-url]").value.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not read the Mountain Project RSS feed.");
+      csvInput.value = result.csv;
+      rssStatus.textContent = `Loaded ${result.count} recent ticks.${result.warnings.length ? ` Warnings: ${result.warnings.slice(0, 3).join(" ")}` : " Review the dates and entries below, then use Review hierarchy and import."}`;
+      root.querySelector("[data-import-ticks]").disabled = false;
+    } catch (error) {
+      rssStatus.textContent = error.message;
+    } finally {
+      rssButton.disabled = false;
+    }
+  });
   root.querySelector("[data-import-ticks]").addEventListener("click", async () => {
     const csv = root.querySelector("[data-tick-csv]").value; const button = root.querySelector("[data-import-ticks]"); const panel = root.querySelector("[data-tick-resolutions]"); const tickStatus = root.querySelector("[data-tick-status]");
     if (!csv.trim()) { tickStatus.textContent = "Paste the exported tick list CSV first."; return; }
@@ -139,6 +167,6 @@
   form.addEventListener("submit", (event) => { event.preventDefault(); const blob = new Blob([preview.value], { type: "text/markdown;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${slugify(field("filename").value) || "climbing-route"}.md`; link.click(); URL.revokeObjectURL(link.href); });
   root.querySelector("[data-copy-route]").addEventListener("click", async () => { await navigator.clipboard.writeText(preview.value); exportStatus.textContent = "Markdown copied to the clipboard."; });
   saveButton.addEventListener("click", saveLocally);
-  if (isLocalEditor) { saveButton.hidden = false; overwriteWrap.hidden = false; root.querySelector("[data-import-ticks]").hidden = false; root.querySelector("[data-import-ticks]").disabled = false; root.querySelector("[data-tick-status]").textContent = ""; }
+  if (isLocalEditor) { saveButton.hidden = false; overwriteWrap.hidden = false; root.querySelector("[data-import-ticks]").hidden = false; root.querySelector("[data-import-ticks]").disabled = false; rssPanel.hidden = false; root.querySelector("[data-tick-status]").textContent = ""; }
   updatePreview();
 })();
