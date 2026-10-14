@@ -194,6 +194,15 @@
   object-fit: cover;
 }
 
+.home-climbing-card__media {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-climbing-card:has(.video-preview) img {
+  visibility: hidden;
+}
+
 .home-climbing-card span {
   padding: 0.8rem;
 }

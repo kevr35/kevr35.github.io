@@ -261,12 +261,28 @@
 }
 
  .climbing-card {
+  position: relative;
   cursor: pointer;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--entry);
   transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+/* Stretch the title link over the card so the whole card is a real link. */
+.climbing-card h2 a::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  content: "";
+}
+
+.climbing-card__eyebrow a,
+.climbing-card .mountain-project-link,
+.climbing-card__edit {
+  position: relative;
+  z-index: 2;
 }
 
 .climbing-card[hidden] {
@@ -453,6 +469,7 @@
 .climbing-card__media {
   position: relative;
   display: block;
+  overflow: hidden;
   aspect-ratio: 16 / 9;
   background: var(--code-bg);
 }
@@ -477,6 +494,118 @@
 
 .climbing-card__body {
   padding: 1rem;
+}
+
+.indoor-strip {
+  margin: 2rem 0;
+}
+
+.indoor-strip[hidden] {
+  display: none;
+}
+
+.indoor-strip__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.indoor-strip__heading h2,
+.indoor-strip__heading p {
+  margin: 0;
+}
+
+.indoor-strip__heading h2 {
+  font-size: 1.2rem;
+}
+
+.indoor-strip__heading p {
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.indoor-strip__track {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0.4rem 0.9rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.indoor-card {
+  display: grid;
+  flex: 0 0 9.5rem;
+  align-content: start;
+  overflow: hidden;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--entry);
+  scroll-snap-align: start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.indoor-card:hover {
+  border-color: var(--primary);
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.video-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+  /* Zoom past YouTube's title bar and caption area, which clip against the media box. */
+  transform: scale(1.45);
+}
+
+.climbing-card:has(.video-preview) .climbing-card__play,
+.indoor-card:has(.video-preview) .climbing-card__play {
+  display: none;
+}
+
+.indoor-card__media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 9 / 16;
+  background: var(--code-bg);
+}
+
+.indoor-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.indoor-card__placeholder {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.indoor-card__body {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem 0.7rem;
+}
+
+.indoor-card__body strong {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.indoor-card__body small {
+  color: var(--secondary);
+  font-size: 0.78rem;
 }
 
 .climbing-card__eyebrow,
@@ -583,6 +712,17 @@
 .climbing-video iframe {
   width: 100%;
   height: 100%;
+  border: 0;
+}
+
+.climbing-instagram {
+  max-width: 540px;
+  margin: 2rem auto;
+}
+
+.climbing-instagram iframe {
+  width: 100%;
+  min-height: 640px;
   border: 0;
 }
 

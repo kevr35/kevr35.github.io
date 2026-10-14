@@ -174,19 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const cardGrades = new Map(cards.map((card) => [card, gradeInfo(card)]));
 
-// Make whole card clickable (except internal links)
-cards.forEach(card => {
-  card.addEventListener('click', (e) => {
-    // If click originated from a link, let default behavior occur
-    if (e.target.closest('a')) return;
-    const mediaLink = card.querySelector('a.climbing-card__media');
-    const titleLink = card.querySelector('h2 a');
-    const target = mediaLink || titleLink;
-    if (target && target.href) {
-      window.location.href = target.href;
-    }
-  });
-});
   const cragFilter = browser.querySelector('[data-filter="crag"]');
   const locationFilter = browser.querySelector('[data-filter="location"]');
   const initialLocation = scopedLocation;
@@ -291,6 +278,10 @@ cards.forEach(card => {
       return grade.maximum >= minimum && grade.minimum <= maximum;
     });
     cards.forEach((card) => { card.hidden = !visible.includes(card); });
+    const activeScope = currentScope();
+    // Indoor sessions only belong on the unscoped climbing page.
+    const indoorStrip = document.querySelector(".indoor-strip");
+    if (indoorStrip) indoorStrip.hidden = Boolean(activeScope.location || activeScope.crag || activeScope.wall || activeScope.mapLocation);
     [...visible].sort((left, right) => {
       const videoPriority = Number(right.dataset.video) - Number(left.dataset.video);
       if (videoPriority) return videoPriority;
