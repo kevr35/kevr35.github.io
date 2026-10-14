@@ -13,6 +13,7 @@ youtube_url: ""
 thumbnail: ""
 photos: []
 personal_note: "2nd attempt of the day, 4th attempt overall"
+ascents: [{"id":"MPObject_201694590","date":"2025-09-14","ascent_type":"Redpoint","personal_note":"2nd attempt of the day, 4th attempt overall"}]
 tags:
   - "Climbing"
 draft: false

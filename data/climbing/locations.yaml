@@ -408,3 +408,13 @@
   latitude: 43.1181
   longitude: -71.1787
   level: "crag"
+- name: "Apocalypse Walls"
+  parent: "Rumney"
+  latitude: 43.80231
+  longitude: -71.8324
+  level: "crag"
+- name: "Blackjack Boulders"
+  parent: "Rumney"
+  latitude: 43.80241
+  longitude: -71.83902
+  level: "crag"

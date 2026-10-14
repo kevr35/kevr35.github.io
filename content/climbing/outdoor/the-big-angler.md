@@ -13,8 +13,9 @@ youtube_url: ""
 thumbnail: ""
 photos: []
 personal_note: "Why can't I get the high foot off the rip"
+ascents: [{"id":"MPObject_203771352","date":"2026-09-06","ascent_type":"Fell/Hung","personal_note":"Why can't I get the high foot off the rip"},{"id":"MPObject_203770548","date":"2026-09-06","ascent_type":"","personal_note":""}]
 tags:
   - "Climbing"
-draft: true
+draft: false
 ---
 

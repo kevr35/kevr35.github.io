@@ -13,6 +13,7 @@ youtube_url: ""
 thumbnail: ""
 photos: []
 personal_note: ""
+ascents: [{"id":"MPObject_203812591","date":"2026-09-12","ascent_type":"Fell/Hung","personal_note":""}]
 tags:
   - "Climbing"
 draft: true

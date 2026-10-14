@@ -13,6 +13,7 @@ youtube_url: "https://youtube.com/shorts/gl1cR5X8JEA"
 thumbnail: ""
 photos: []
 personal_note: ""
+ascents: [{"id":"MPObject_203606598","date":"2026-08-08","ascent_type":"Flash","personal_note":""}]
 tags:
   - "Climbing"
 draft: false

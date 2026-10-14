@@ -13,6 +13,7 @@ youtube_url: ""
 thumbnail: ""
 photos: []
 personal_note: "Slippery when wet"
+ascents: [{"id":"MPObject_201523482","date":"2025-08-17","ascent_type":"Onsight","personal_note":"Slippery when wet"}]
 tags:
   - "Climbing"
 draft: false

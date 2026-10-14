@@ -13,6 +13,7 @@ youtube_url: ""
 thumbnail: ""
 photos: []
 personal_note: "Finally. Arm bar does it"
+ascents: [{"id":"MPObject_203612907","date":"2026-08-09","ascent_type":"Send","personal_note":"Finally. Arm bar does it"}]
 tags:
   - "Climbing"
 draft: false
