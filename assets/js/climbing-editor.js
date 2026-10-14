@@ -139,6 +139,6 @@
   form.addEventListener("submit", (event) => { event.preventDefault(); const blob = new Blob([preview.value], { type: "text/markdown;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${slugify(field("filename").value) || "climbing-route"}.md`; link.click(); URL.revokeObjectURL(link.href); });
   root.querySelector("[data-copy-route]").addEventListener("click", async () => { await navigator.clipboard.writeText(preview.value); exportStatus.textContent = "Markdown copied to the clipboard."; });
   saveButton.addEventListener("click", saveLocally);
-  if (isLocalEditor) { saveButton.hidden = false; overwriteWrap.hidden = false; root.querySelector("[data-import-ticks]").hidden = false; root.querySelector("[data-tick-status]").textContent = ""; }
+  if (isLocalEditor) { saveButton.hidden = false; overwriteWrap.hidden = false; root.querySelector("[data-import-ticks]").hidden = false; root.querySelector("[data-import-ticks]").disabled = false; root.querySelector("[data-tick-status]").textContent = ""; }
   updatePreview();
 })();

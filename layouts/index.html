@@ -56,7 +56,7 @@
     <a class="home-feature__link" href="{{ "climbing/" | relLangURL }}">Visit the climbing log <span aria-hidden="true">&#8594;</span></a>
   </div>
   <div class="home-climbing-grid">
-    {{ $climbingPages := where site.RegularPages "Section" "climbing" }}
+    {{ $climbingPages := where (where site.RegularPages "Section" "climbing") "Params.setting" "ne" "Indoor" }}
     {{ $rankedVideoPages := slice }}
     {{ range $climbingPages }}
       {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
@@ -82,11 +82,12 @@
       {{ $youtubeID := $youtube }}
       {{ if strings.Contains $youtube "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ else if strings.Contains $youtube "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" $youtube }}{{ end }}
       <a class="home-climbing-card" href="{{ $route.RelPermalink }}">
-        <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video preview for {{ $route.Title }}" loading="lazy">
+        <div class="home-climbing-card__media" data-preview-media data-youtube-id="{{ $youtubeID }}"><img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video preview for {{ $route.Title }}" loading="lazy"></div>
         <span><strong>{{ $route.Title }}</strong><small>{{ $route.Params.crag }} · {{ $route.Params.grade }}</small></span>
       </a>
     {{ end }}
     {{ end }}
   </div>
 </section>
+{{ with resources.Get "js/video-preview.js" }}{{ $script := . | minify | fingerprint }}<script defer src="{{ $script.RelPermalink }}"></script>{{ end }}
 {{- end -}}

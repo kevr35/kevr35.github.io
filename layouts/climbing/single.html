@@ -1,5 +1,53 @@
 {{- define "main" -}}
 {{- $routePage := . -}}
+{{- $indoorTitle := partial "indoor-title.html" . -}}
+{{- if eq (lower (.Params.setting | default "")) "indoor" -}}
+{{- $gym := index (where (site.Data.climbing.gyms | default slice) "name" .Params.gym) 0 -}}
+{{- $board := index (where (site.Data.climbing.boards | default slice) "name" .Params.board) 0 -}}
+<article class="post-single climbing-route climbing-route--indoor">
+  <header class="post-header">
+    {{ partial "back-button.html" (dict "url" ("climbing/" | relLangURL) "label" "Back to Climbing Log") }}
+    <h1>{{ $indoorTitle }}</h1>
+    {{ with .Description }}<div class="post-description">{{ . }}</div>{{ end }}
+    <div class="climbing-route__facts">
+      {{ with .Params.board }}<span><b>Board</b>{{ with $board.url }}<a href="{{ . }}" target="_blank" rel="noopener">{{ $routePage.Params.board }}</a>{{ else }}{{ . }}{{ end }}</span>{{ end }}
+      {{ with .Params.board_angle }}<span><b>Angle</b>{{ . }}°</span>{{ end }}
+      {{ with .Params.gym }}<span><b>Gym</b>{{ with $gym.url }}<a href="{{ . }}" target="_blank" rel="noopener">{{ $routePage.Params.gym }}</a>{{ else }}{{ . }}{{ end }}</span>{{ end }}
+      {{ with $gym }}{{ if or .city .state }}<span><b>Location</b>{{ .city }}{{ if and .city .state }}, {{ end }}{{ .state }}</span>{{ end }}{{ end }}
+      {{ with .Params.grade }}<span><b>Grade</b>{{ . }}</span>{{ end }}
+      {{ with .Params.discipline }}<span><b>Discipline</b>{{ . }}</span>{{ end }}
+      <span><b>Setting</b>Indoor</span>
+      {{ with .Params.climb_date }}<span><b>Climbed</b>{{ time.Format "January 2, 2006" . }}</span>{{ end }}
+    </div>
+  </header>
+
+  {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
+  {{ with $youtube }}
+  {{ $youtubeID := . }}
+  {{ if strings.Contains . "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" . }}{{ else if strings.Contains . "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" . }}{{ end }}
+  <div class="climbing-video">
+    <iframe src="https://www.youtube-nocookie.com/embed/{{ $youtubeID }}" title="{{ $indoorTitle }} on YouTube" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  </div>
+  {{ end }}
+
+  {{ with .Params.instagram_url }}
+  {{ $match := findRE `instagram\.com/(?:p|reel|reels|tv)/[A-Za-z0-9_-]+` . 1 }}
+  {{ with $match }}
+  {{ $path := replaceRE `^instagram\.com/reels/` "instagram.com/reel/" (index . 0) }}
+  <div class="climbing-instagram">
+    <iframe src="https://www.{{ $path }}/embed" title="{{ $indoorTitle }} on Instagram" loading="lazy" scrolling="no" allowfullscreen></iframe>
+  </div>
+  {{ end }}
+  <p><a href="{{ . }}" target="_blank" rel="noopener">View on Instagram &#8599;</a></p>
+  {{ end }}
+
+  {{ with .Params.board_url }}
+  <a class="mountain-project-link mountain-project-link--large" href="{{ . }}" target="_blank" rel="noopener"><span>View this problem on the {{ $routePage.Params.board }} Board</span><span aria-hidden="true">&#8599;</span></a>
+  {{ end }}
+
+  {{ with .Content }}<div class="post-content">{{ . }}</div>{{ end }}
+</article>
+{{- else -}}
 <article class="post-single climbing-route">
   <header class="post-header">
     {{ partial "back-button.html" (dict "url" .Parent.RelPermalink "label" "Back to Climbing Log") }}
@@ -49,4 +97,5 @@
   {{ with .Content }}<div class="post-content">{{ . }}</div>{{ end }}
 
 </article>
+{{- end -}}
 {{- end -}}

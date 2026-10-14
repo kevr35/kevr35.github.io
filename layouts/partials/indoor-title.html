@@ -1,0 +1,7 @@
+{{- /* Display name for an indoor entry: its title if given, otherwise "V4 · Gym or Board". */ -}}
+{{- $title := .Params.title -}}
+{{- if not $title -}}
+  {{- $place := cond (ne (.Params.board | default "") "") (printf "%s Board" .Params.board) (.Params.gym | default "Indoor") -}}
+  {{- $title = delimit (slice (.Params.grade | default "Indoor") $place) " · " -}}
+{{- end -}}
+{{- return $title -}}

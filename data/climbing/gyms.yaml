@@ -1,0 +1,12 @@
+# Climbing gyms. Indoor entries reference these by exact name via `gym: "..."` in their front matter.
+# Fields: name, city, state, url (link to the gym's website; optional)
+# Example:
+# - name: "Metrorock Boston"
+#   city: "Somerville"
+#   state: "Massachusetts"
+#   url: "https://www.metrorock.com/"
+
+- name: "Bloc Garten"
+  city: "Columbus"
+  state: "Ohio"
+  url: "https://5.life/bg/"

@@ -1,5 +1,7 @@
 {{- define "main" -}}
-{{- $pages := where .RegularPages "Params.hidden" "ne" true -}}
+{{- $visiblePages := where .RegularPagesRecursive "Params.hidden" "ne" true -}}
+{{- $pages := where $visiblePages "Params.setting" "ne" "Indoor" -}}
+{{- $indoorPages := where $visiblePages "Params.setting" "eq" "Indoor" -}}
 {{- $climbingURL := .RelPermalink -}}
 {{- $crags := slice -}}
 {{- $grades := slice -}}
@@ -29,6 +31,51 @@
 
 {{ with .Content }}
 <div class="post-content climbing-intro">{{ . }}</div>
+{{ end }}
+
+{{ if $indoorPages }}
+<section class="indoor-strip" aria-labelledby="indoor-strip-title">
+  <div class="indoor-strip__heading">
+    <h2 id="indoor-strip-title">Indoor sessions</h2>
+    <p data-scroll-hint hidden>Scroll for more &#8594;</p>
+  </div>
+  <div class="indoor-strip__track" tabindex="0" role="region" aria-label="Indoor climbing videos">
+    {{ range ($indoorPages.ByParam "climb_date").Reverse }}
+    {{- $gym := index (where (site.Data.climbing.gyms | default slice) "name" .Params.gym) 0 -}}
+    {{- $indoorTitle := partial "indoor-title.html" . -}}{{- $thumb := .Params.thumbnail -}}
+    {{- $youtube := .Params.youtube_url | default .Params.youtube_id -}}
+    {{- $youtubeID := "" -}}
+    {{- with $youtube -}}
+      {{- $youtubeID = . -}}
+      {{- if strings.Contains . "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" . }}{{ else if strings.Contains . "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" . }}{{ end -}}
+    {{- end -}}
+    {{- if and (not $thumb) $youtubeID -}}
+      {{- $thumb = printf "https://i.ytimg.com/vi/%s/hqdefault.jpg" $youtubeID -}}
+    {{- else if $thumb -}}
+      {{- $thumb = $thumb | relURL -}}
+    {{- end }}
+    <a class="indoor-card" href="{{ .RelPermalink }}">
+      <span class="indoor-card__media" data-preview-media{{ with $youtubeID }} data-youtube-id="{{ . }}"{{ end }}>
+        {{ if $thumb }}<img src="{{ $thumb }}" alt="Video thumbnail for {{ $indoorTitle }}" loading="lazy">{{ else }}<span class="indoor-card__placeholder" aria-hidden="true">{{ if .Params.instagram_url }}Instagram{{ else }}Video{{ end }}</span>{{ end }}
+        <span class="climbing-card__play" aria-hidden="true">Play</span>
+      </span>
+      <span class="indoor-card__body">
+        <strong>{{ $indoorTitle }}</strong>
+        {{ if .Params.board }}<small>{{ .Params.board }} Board{{ with .Params.board_angle }} · {{ . }}°{{ end }}</small>{{ else }}<small>{{ .Params.gym }}{{ with $gym }}{{ with .city }} · {{ . }}{{ end }}{{ end }}</small>{{ end }}
+        <small>{{ .Params.grade }}{{ with .Params.climb_date }} · {{ time.Format "Jan 2, 2006" . }}{{ end }}</small>
+      </span>
+    </a>
+    {{ end }}
+  </div>
+</section>
+<script>
+  (function () {
+    var q = new URLSearchParams(window.location.search);
+    if (["location", "crag", "wall", "map"].some(function (k) { return q.get(k); })) {
+      document.querySelector(".indoor-strip").hidden = true;
+    }
+  })();
+</script>
 {{ end }}
 
 {{- $mapPoints := slice -}}
@@ -124,7 +171,7 @@
       {{ with $youtube }}
       {{ $youtubeID := . }}
       {{ if strings.Contains . "youtube.com" }}{{ $youtubeID = replaceRE `.*(?:v=|embed/|shorts/)([A-Za-z0-9_-]{11}).*` "$1" . }}{{ else if strings.Contains . "youtu.be/" }}{{ $youtubeID = replaceRE `.*youtu\.be/([A-Za-z0-9_-]{11}).*` "$1" . }}{{ end }}
-      <a class="climbing-card__media" href="{{ $route.RelPermalink }}" aria-label="View {{ $route.Title }}">
+      <a class="climbing-card__media" data-preview-media data-youtube-id="{{ $youtubeID }}" href="{{ $route.RelPermalink }}" aria-label="View {{ $route.Title }}">
         <img src="https://i.ytimg.com/vi/{{ $youtubeID }}/hqdefault.jpg" alt="Video thumbnail for {{ $route.Title }}" loading="lazy">
         <span class="climbing-card__play" aria-hidden="true">Play</span>
       </a>
@@ -163,6 +210,14 @@
   <p class="climbing-empty" data-empty hidden>No entries match those filters.</p>
 </section>
 
+{{- with resources.Get "js/indoor-strip.js" -}}
+  {{- $script := . | minify | fingerprint -}}
+  <script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
+{{- with resources.Get "js/video-preview.js" -}}
+  {{- $script := . | minify | fingerprint -}}
+  <script defer src="{{ $script.RelPermalink }}"></script>
+{{- end -}}
 {{- with resources.Get "js/climbing.js" -}}
   {{- $script := . | minify | fingerprint -}}
   <script defer src="{{ $script.RelPermalink }}"></script>

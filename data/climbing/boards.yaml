@@ -1,0 +1,12 @@
+# Training boards. Indoor entries reference these by exact name via `board: "..."` in their front matter.
+# `url` is the board's website, used when an entry has no direct `board_url` to the specific route.
+- name: "Kilter"
+  url: "https://settercloset.com/pages/the-kilter-board"
+- name: "Tension"
+  url: "https://tensionclimbing.com/"
+- name: "Moon"
+  url: "https://www.moonboard.com/"
+- name: "Decoy"
+  url: "https://decoyholds.com/"
+- name: "Grasshopper"
+  url: "https://grasshopperboard.com/"

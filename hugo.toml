@@ -5,6 +5,9 @@ theme = 'PaperMod'
 enableGitInfo = true # allow for accessing Git's last modified time
 enableRobotsTXT = true #google scholar crawlers will be directed
 
+[permalinks.page]
+  climbing = "/climbing/:slug/"
+
 [params]
   math = true  # This makes .Site.Params.math true for EVERY page
 

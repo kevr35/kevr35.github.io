@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-CONTENT_DIR = "content/climbing"
+CONTENT_DIR = "content/climbing/outdoor"
 LOCATIONS_FILE = "data/climbing/locations.yaml"
 
 

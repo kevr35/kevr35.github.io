@@ -14,10 +14,11 @@ from http.server import SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 from PIL import Image, ImageOps
+import indoor_import
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = ROOT / "public"
-CONTENT = ROOT / "content" / "climbing"
+CONTENT = ROOT / "content" / "climbing" / "outdoor"
 IMAGE_ROOT = ROOT / "static" / "route-images"
 LOCATIONS = ROOT / "data" / "climbing" / "locations.yaml"
 IMPORT_OVERRIDES = ROOT / "data" / "climbing" / "import-overrides.json"
@@ -204,14 +205,44 @@ def resolve_tick_hierarchy(info, overrides=None, locations=None, route_hierarchi
     result = {"key": key, "source_location": source_location, "source_crag": source_crag}
     if not source_location or not source_crag:
         return result | {"status": "unresolved", "location": source_location, "crag": source_crag}
-    override = (overrides or {}).get(key)
-    if isinstance(override, dict) and override.get("location") and override.get("crag"):
-        return result | {"status": "override", "location": clean_location_name(override["location"]), "crag": clean_location_name(override["crag"])}
     locations = locations if locations is not None else read_locations()
     route_hierarchies = route_hierarchies if route_hierarchies is not None else known_route_hierarchies()
+
+    segments = info.get("location_segments") or [source_location, source_crag]
+    pairs = [
+        (segments[index], segments[index + 1])
+        for index in range(len(segments) - 1)
+    ]
+    override_map = overrides or {}
+    for location_name, crag_name in pairs:
+        pair_key = hierarchy_key(location_name, crag_name)
+        override = override_map.get(pair_key)
+        if isinstance(override, dict) and override.get("location") and override.get("crag"):
+            return result | {"status": "override", "location": clean_location_name(override["location"]), "crag": clean_location_name(override["crag"])}
+    override = override_map.get(key)
+    if isinstance(override, dict) and override.get("location") and override.get("crag"):
+        return result | {"status": "override", "location": clean_location_name(override["location"]), "crag": clean_location_name(override["crag"])}
+
+    for location_name, crag_name in pairs:
+        known_crag = next(
+            (
+                location for location in locations
+                if location["name"].casefold() == crag_name.casefold()
+                and location.get("parent", "").casefold() == location_name.casefold()
+                and location.get("level") == "crag"
+            ),
+            None,
+        )
+        pair_key = hierarchy_key(location_name, crag_name)
+        if known_crag or pair_key in route_hierarchies:
+            canonical_location = known_crag.get("parent", location_name) if known_crag else location_name
+            canonical_crag = known_crag["name"] if known_crag else crag_name
+            return result | {"status": "matched", "location": canonical_location, "crag": canonical_crag}
+
     known_crag = any(
         location["name"].casefold() == source_crag.casefold()
         and location.get("parent", "").casefold() == source_location.casefold()
+        and location.get("level") == "crag"
         for location in locations
     )
     if known_crag or key in route_hierarchies:
@@ -248,6 +279,7 @@ def parse_tick_row(row):
         "state": state,
         "location": segments[0] if len(segments) > 0 else "",
         "crag": segments[1] if len(segments) > 1 else "",
+        "location_segments": segments,
         "wall": " / ".join(segments[2:]) if len(segments) > 2 else "",
     }
 
@@ -693,6 +725,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if self.path == "/api/climbing/routes":
             self.handle_save_route()
+        elif self.path == "/api/climbing/preview-indoor":
+            self.handle_indoor("preview")
+        elif self.path == "/api/climbing/save-indoor":
+            self.handle_indoor("save")
         elif self.path == "/api/climbing/preview-ticks":
             self.handle_preview_ticks()
         elif self.path == "/api/climbing/import-ticks":
@@ -768,7 +804,22 @@ class Handler(SimpleHTTPRequestHandler):
                     if original_path.exists() and original_path != target:
                         original_path.unlink()
             build_site()
-            self.send_json(200, {"path": f"content/climbing/{filename}"})
+            self.send_json(200, {"path": f"content/climbing/outdoor/{filename}"})
+        except FileExistsError as error:
+            self.send_json(409, {"error": str(error)})
+        except (ValueError, json.JSONDecodeError, OSError, RuntimeError) as error:
+            self.send_json(400, {"error": str(error)})
+
+    def handle_indoor(self, action):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length))
+            if action == "preview":
+                self.send_json(200, indoor_import.preview_indoor(payload))
+            else:
+                path = indoor_import.save_indoor(payload)
+                build_site()
+                self.send_json(200, {"path": path})
         except FileExistsError as error:
             self.send_json(409, {"error": str(error)})
         except (ValueError, json.JSONDecodeError, OSError, RuntimeError) as error:
@@ -967,5 +1018,4 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(200, crag_usage(name))
             return
         super().do_GET()
-
 

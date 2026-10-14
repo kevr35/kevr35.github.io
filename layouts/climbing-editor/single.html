@@ -84,6 +84,34 @@
     <p class="climbing-editor__status" data-tick-status role="status">Available only in the local editor. Run <code>python tools/site_editor.py</code> and open this page at http://127.0.0.1:8000/admin/climbing/.</p>
   </section>
 
+  <section class="climbing-editor__panel climbing-editor__lookup" data-indoor-import>
+    <h2>Add an indoor or board climb from a video</h2>
+    <p>Paste a YouTube or Instagram link. The title, date, grade, gym or board, and board angle are detected from the video and stay editable. Gyms and boards must exist in <code>data/climbing/gyms.yaml</code> / <code>boards.yaml</code>.</p>
+    <label for="indoor-url">Video URL</label>
+    <input id="indoor-url" type="url" data-indoor-url placeholder="https://youtube.com/shorts/...">
+    <div class="climbing-editor__actions">
+      <button type="button" class="climbing-editor__button climbing-editor__button--primary" data-indoor-fetch>Fetch details</button>
+    </div>
+    <form data-indoor-form hidden>
+      <div class="climbing-editor__grid">
+        <label>Title <small>Leave blank for a nameless climb</small><input data-indoor-field="title"></label>
+        <label>Date climbed<input data-indoor-field="climb_date" placeholder="YYYY-MM-DD"></label>
+        <label>Grade<input data-indoor-field="grade"></label>
+        <label>Discipline<input data-indoor-field="discipline"></label>
+        <label>Gym<select data-indoor-field="gym"></select></label>
+        <label>Board <small>Choose one for board climbs</small><select data-indoor-field="board"></select></label>
+        <label>Board angle<input data-indoor-field="board_angle" inputmode="numeric"></label>
+        <label>Link to the problem on the board<input data-indoor-field="board_url" type="url"></label>
+        <label>Filename<input data-indoor-filename></label>
+      </div>
+      <label class="climbing-editor__checkbox"><input type="checkbox" data-indoor-overwrite> Allow replacing an existing file</label>
+      <div class="climbing-editor__actions">
+        <button type="submit" class="climbing-editor__button climbing-editor__button--local">Save to content/climbing/indoor/</button>
+      </div>
+    </form>
+    <p class="climbing-editor__status" data-indoor-status role="status">Available only in the local editor (<code>python tools/site_editor.py</code>).</p>
+  </section>
+
 </div>
   {{ $archetype := readFile "archetypes/climbing-route.md" }}
   <script type="application/json" data-climbing-archetype>{{ $archetype | jsonify }}</script>
@@ -91,4 +119,6 @@
 <script defer src="{{ $dialogScript.RelPermalink }}"></script>
 {{- $script := resources.Get "js/climbing-editor.js" | minify | fingerprint -}}
 <script defer src="{{ $script.RelPermalink }}"></script>
+{{- $indoorScript := resources.Get "js/indoor-importer.js" | minify | fingerprint -}}
+<script defer src="{{ $indoorScript.RelPermalink }}"></script>
 {{- end -}}
