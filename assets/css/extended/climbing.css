@@ -10,6 +10,25 @@
   margin-top: 2rem;
 }
 
+.climbing-search {
+  display: grid;
+  grid-column: 1 / span 2;
+  grid-row: 1;
+  gap: 0.35rem;
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.climbing-search input {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.65rem;
+  color: var(--primary);
+  background: var(--theme);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
 .climbing-map-section {
   margin: 2rem 0;
 }
@@ -123,19 +142,24 @@
   font-size: 0.85rem;
 }
 
-.climbing-controls > label:nth-of-type(1) {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.climbing-controls > label:nth-of-type(2) {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.climbing-controls > label:nth-of-type(3) {
+.climbing-controls > .climbing-control--location {
   grid-column: 3;
   grid-row: 1;
+}
+
+.climbing-controls > .climbing-control--crag {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.climbing-controls > .climbing-control--discipline {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.climbing-controls > .climbing-control--sort {
+  grid-column: 3;
+  grid-row: 2;
 }
 
 .climbing-controls select {
@@ -151,7 +175,7 @@
 .climbing-grade-ranges {
   display: grid;
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: 3;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
   padding-top: 1rem;
@@ -773,9 +797,7 @@
     grid-template-columns: 1fr;
   }
 
-  .climbing-controls > label:nth-of-type(1),
-  .climbing-controls > label:nth-of-type(2),
-  .climbing-controls > label:nth-of-type(3) {
+  .climbing-controls > label {
     grid-column: 1;
     grid-row: auto;
   }

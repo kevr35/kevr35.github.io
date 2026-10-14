@@ -103,18 +103,39 @@
 
 <section class="climbing-browser" data-climbing-browser>
   <div class="climbing-controls" aria-label="Filter climbing entries">
-    <label>
+    <label class="climbing-search">
+      <span>Search routes or locations</span>
+      <input type="search" data-route-search placeholder="Route, location, crag, or wall" autocomplete="off">
+    </label>
+    <label class="climbing-control--location">
       <span>Location</span>
       <select data-filter="location">
         <option value="">All locations</option>
         {{ range sort $locations }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
       </select>
     </label>
-    <label>
+    <label class="climbing-control--crag">
       <span>Crag</span>
       <select data-filter="crag">
         <option value="">All crags</option>
         {{ range sort $crags }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <label class="climbing-control--discipline">
+      <span>Type</span>
+      <select data-filter="discipline">
+        <option value="">All types</option>
+        {{ range sort $disciplines }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
+      </select>
+    </label>
+    <label class="climbing-control--sort">
+      <span>Sort</span>
+      <select data-sort>
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="grade">Grade</option>
+        <option value="title">Name</option>
+        <option value="location">Location</option>
       </select>
     </label>
     <div class="climbing-grade-ranges" data-grade-ranges>
@@ -137,23 +158,6 @@
         </div>
       </div>
     </div>
-    <label>
-      <span>Type</span>
-      <select data-filter="discipline">
-        <option value="">All types</option>
-        {{ range sort $disciplines }}<option value="{{ . | lower | htmlEscape }}">{{ . }}</option>{{ end }}
-      </select>
-    </label>
-    <label>
-      <span>Sort</span>
-      <select data-sort>
-        <option value="date-desc">Newest first</option>
-        <option value="date-asc">Oldest first</option>
-        <option value="grade">Grade</option>
-        <option value="title">Name</option>
-        <option value="location">Location</option>
-      </select>
-    </label>
   </div>
 
   <p class="climbing-results" data-results aria-live="polite"></p>
@@ -165,7 +169,7 @@
     {{- $climbDate := .Params.climb_date | default (.Date.Format "2006-01-02") -}}
     {{- $cragRecord := index (where site.Data.climbing.locations "name" .Params.crag) 0 -}}
     {{- $routeLocation := $cragRecord.parent -}}
-    <article class="climbing-card" data-route-card data-route-file="{{ .File.LogicalName }}" data-location="{{ $routeLocation | lower }}" data-crag="{{ .Params.crag | lower }}" data-wall="{{ .Params.wall | lower }}" data-grade="{{ .Params.grade | lower }}" data-discipline="{{ .Params.discipline | lower }}" data-date="{{ $climbDate }}" data-title="{{ .Title | lower }}" data-video="{{ if or .Params.youtube_url .Params.youtube_id }}1{{ else }}0{{ end }}">
+    <article class="climbing-card" data-route-card data-route-file="{{ .File.LogicalName }}" data-location="{{ $routeLocation | lower }}" data-crag="{{ .Params.crag | lower }}" data-wall="{{ .Params.wall | lower }}" data-grade="{{ .Params.grade | lower }}" data-discipline="{{ .Params.discipline | lower }}" data-date="{{ $climbDate }}" data-title="{{ .Title | lower }}" data-search="{{ .Title | lower }} {{ $routeLocation | lower }} {{ .Params.crag | lower }} {{ .Params.wall | lower }}" data-video="{{ if or .Params.youtube_url .Params.youtube_id }}1{{ else }}0{{ end }}">
       {{ $route := . }}
       {{ $youtube := .Params.youtube_url | default .Params.youtube_id }}
       {{ with $youtube }}

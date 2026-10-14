@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = browser.querySelector("[data-route-grid]");
   const resultCount = browser.querySelector("[data-results]");
   const empty = browser.querySelector("[data-empty]");
+  const searchInput = browser.querySelector("[data-route-search]");
   const rangeGroups = [...browser.querySelectorAll("[data-grade-range]")];
   const ranges = {};
   const ydsGrades = [
@@ -251,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const update = () => {
     const activeFilters = Object.fromEntries(filters.map((filter) => [filter.dataset.filter, normalizeFilterValue(filter.value)]));
+    const searchValue = normalizeFilterValue(searchInput.value.trim());
     const selectedType = activeFilters.discipline;
     const selectedBouldering = selectedType === "boulder" || selectedType === "bouldering";
 
@@ -263,7 +265,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const visible = cards.filter((card) => {
       const grade = cardGrades.get(card);
-      const matchesBasicFilters = Object.entries(activeFilters).every(([key, value]) => !value || card.dataset[key] === value);
+      const matchesBasicFilters = Object.entries(activeFilters).every(([key, value]) => !value || card.dataset[key] === value)
+        && (!searchValue || normalizeFilterValue(card.dataset.search).includes(searchValue));
       const scope = currentScope();
       const matchesMapScope = scope.mapLocation
         ? normalizeFilterValue(card.dataset.location) === scope.mapLocation || normalizeFilterValue(card.dataset.crag) === scope.mapLocation
@@ -329,5 +332,6 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshMap();
   }));
   sortSelect.addEventListener("change", update);
+  searchInput.addEventListener("input", update);
   update();
 });
