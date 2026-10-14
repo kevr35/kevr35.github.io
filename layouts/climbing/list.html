@@ -37,9 +37,13 @@
 <section class="indoor-strip" aria-labelledby="indoor-strip-title">
   <div class="indoor-strip__heading">
     <h2 id="indoor-strip-title">Indoor sessions</h2>
-    <p data-scroll-hint hidden>Scroll for more &#8594;</p>
+    <div class="indoor-strip__controls" data-indoor-controls role="group" aria-label="Pan indoor routes" hidden>
+      <span class="indoor-strip__label">See more:</span>
+      <button class="indoor-strip__pan" type="button" data-pan-left aria-label="Pan indoor routes left" aria-controls="indoor-strip-track" disabled>&#8592;</button>
+      <button class="indoor-strip__pan" type="button" data-pan-right aria-label="Pan indoor routes right" aria-controls="indoor-strip-track" disabled>&#8594;</button>
+    </div>
   </div>
-  <div class="indoor-strip__track" tabindex="0" role="region" aria-label="Indoor climbing videos">
+  <div class="indoor-strip__track" id="indoor-strip-track" tabindex="0" role="region" aria-label="Indoor climbing videos">
     {{ range ($indoorPages.ByParam "climb_date").Reverse }}
     {{- $gym := index (where (site.Data.climbing.gyms | default slice) "name" .Params.gym) 0 -}}
     {{- $indoorTitle := partial "indoor-title.html" . -}}{{- $thumb := .Params.thumbnail -}}

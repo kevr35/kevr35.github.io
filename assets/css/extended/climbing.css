@@ -536,18 +536,55 @@
   margin-bottom: 0.6rem;
 }
 
-.indoor-strip__heading h2,
-.indoor-strip__heading p {
-  margin: 0;
-}
-
 .indoor-strip__heading h2 {
+  margin: 0;
   font-size: 1.2rem;
 }
 
-.indoor-strip__heading p {
+.indoor-strip__controls {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.4rem;
+}
+
+.indoor-strip__controls[hidden] {
+  display: none;
+}
+
+.indoor-strip__label {
+  align-self: center;
   color: var(--secondary);
   font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.indoor-strip__pan {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  place-items: center;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--entry);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.indoor-strip__pan:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.indoor-strip__pan:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.indoor-strip__pan:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .indoor-strip__track {
@@ -794,17 +831,21 @@
 
 
   .climbing-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .climbing-controls > label {
-    grid-column: 1;
+  .climbing-controls > .climbing-search,
+  .climbing-controls > .climbing-control--location,
+  .climbing-controls > .climbing-control--crag,
+  .climbing-controls > .climbing-control--discipline,
+  .climbing-controls > .climbing-control--sort,
+  .climbing-controls > .climbing-grade-ranges {
+    grid-column: 1 / -1;
     grid-row: auto;
   }
 
   .climbing-grade-ranges {
-    grid-template-columns: 1fr;
-    grid-row: auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
