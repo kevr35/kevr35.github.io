@@ -3,7 +3,7 @@ title: "Tome's Roof"
 date: 2026-10-14T18:40:33.000Z
 climb_date: "2026-10-10"
 crag: "Smugglers' Notch Bouldering"
-wall: "Smugglers' Notch Bouldering / Boulders Behind\u2026 / Tomes Boulder"
+wall: ""
 discipline: "Boulder"
 setting: "Outdoor"
 grade: "V6-7"
